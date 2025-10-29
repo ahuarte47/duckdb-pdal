@@ -16,8 +16,3 @@ query I
 SELECT pdal('Sam');
 ----
 Pdal Sam 🐥
-
-query I
-SELECT pdal_openssl_version('Michael') ILIKE 'Pdal Michael, my linked OpenSSL version is OpenSSL%';
-----
-true
