@@ -1,0 +1,23 @@
+# name: test/sql/pdal.test
+# description: test pdal extension
+# group: [sql]
+
+# Before we load the extension, this will fail
+statement error
+SELECT pdal('Sam');
+----
+Catalog Error: Scalar Function with name pdal does not exist!
+
+# Require statement will ensure this test is run with this extension loaded
+require pdal
+
+# Confirm the extension works
+query I
+SELECT pdal('Sam');
+----
+Pdal Sam 🐥
+
+query I
+SELECT pdal_openssl_version('Michael') ILIKE 'Pdal Michael, my linked OpenSSL version is OpenSSL%';
+----
+true
