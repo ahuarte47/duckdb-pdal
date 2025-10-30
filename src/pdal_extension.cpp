@@ -6,19 +6,14 @@
 #include "duckdb/function/scalar_function.hpp"
 #include <duckdb/parser/parsed_data/create_scalar_function_info.hpp>
 
+// PDAL
+#include "pdal/pdal_table_functions.hpp"
+
 namespace duckdb {
 
-inline void PdalScalarFun(DataChunk &args, ExpressionState &state, Vector &result) {
-	auto &name_vector = args.data[0];
-	UnaryExecutor::Execute<string_t, string_t>(name_vector, result, args.size(), [&](string_t name) {
-		return StringVector::AddString(result, "Pdal " + name.GetString() + " 🐥");
-	});
-}
-
 static void LoadInternal(ExtensionLoader &loader) {
-	// Register a scalar function
-	auto pdal_scalar_function = ScalarFunction("pdal", {LogicalType::VARCHAR}, LogicalType::VARCHAR, PdalScalarFun);
-	loader.RegisterFunction(pdal_scalar_function);
+	// Register functions
+	PdalTableFunctions::Register(loader);
 }
 
 void PdalExtension::Load(ExtensionLoader &loader) {

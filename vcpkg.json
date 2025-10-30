@@ -1,12 +1,27 @@
 {
-        "dependencies": [
-        ],
-        "vcpkg-configuration": {
-                "overlay-ports": [
-                        "./extension-ci-tools/vcpkg_ports"
-                ],
-                "overlay-triplets": [
-                        "./extension-ci-tools/toolchains"
-                ]
+    "dependencies": [
+        {
+            "name": "gdal",
+            "default-features": false,
+            "features": [
+                "arrow","curl","expat","geos","gif","hdf5","iconv","jpeg","lerc","libkml","libspatialite","libxml2","lzma","netcdf","openjpeg","openssl","pcre2","png","parquet","qhull","recommended-features","sqlite3","webp","zstd"
+            ]
+        },
+        {
+            "name": "pdal",
+            "default-features": false,
+            "features": [
+                "zstd"
+            ]
         }
+    ],
+    "vcpkg-configuration": {
+        "overlay-ports": [
+            "./extension-ci-tools/vcpkg_ports"
+        ],
+        "overlay-triplets": [
+            "./extension-ci-tools/toolchains"
+        ]
+    },
+    "builtin-baseline": "ce613c41372b23b1f51333815feb3edd87ef8a8b"
 }
