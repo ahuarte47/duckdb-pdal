@@ -296,6 +296,364 @@ struct PDAL_Drivers {
 };
 
 //======================================================================================================================
+// PDAL_Info
+//======================================================================================================================
+
+struct PDAL_Info {
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Bind
+	//------------------------------------------------------------------------------------------------------------------
+
+	struct BindData final : TableFunctionData {
+		vector<OpenFileInfo> files;
+		explicit BindData(vector<OpenFileInfo> files_p) : files(std::move(files_p)) {
+		}
+	};
+
+	static unique_ptr<FunctionData> Bind(ClientContext &context, TableFunctionBindInput &input,
+	                                     vector<LogicalType> &return_types, vector<string> &names) {
+
+		names.emplace_back("file_name");
+		return_types.push_back(LogicalType::VARCHAR);
+
+		// General Point Cloud fields (QuickInfo)
+
+		names.emplace_back("point_count");
+		return_types.push_back(LogicalType::UBIGINT);
+
+		names.emplace_back("min_x");
+		return_types.push_back(LogicalType::DOUBLE);
+		names.emplace_back("min_y");
+		return_types.push_back(LogicalType::DOUBLE);
+		names.emplace_back("min_z");
+		return_types.push_back(LogicalType::DOUBLE);
+		names.emplace_back("max_x");
+		return_types.push_back(LogicalType::DOUBLE);
+		names.emplace_back("max_y");
+		return_types.push_back(LogicalType::DOUBLE);
+		names.emplace_back("max_z");
+		return_types.push_back(LogicalType::DOUBLE);
+
+		names.emplace_back("srs_wkt");
+		return_types.push_back(LogicalType::VARCHAR);
+
+		// LAS/LAZ Header fields
+
+		names.emplace_back("extra_header");
+		return_types.push_back(LogicalType::BOOLEAN);
+		names.emplace_back("compressed");
+		return_types.push_back(LogicalType::BOOLEAN);
+
+		names.emplace_back("file_signature");
+		return_types.push_back(LogicalType::VARCHAR);
+		names.emplace_back("file_source_id");
+		return_types.push_back(LogicalType::USMALLINT);
+		names.emplace_back("global_encoding");
+		return_types.push_back(LogicalType::USMALLINT);
+		names.emplace_back("project_id");
+		return_types.push_back(LogicalType::UUID);
+		names.emplace_back("version_major");
+		return_types.push_back(LogicalType::UTINYINT);
+		names.emplace_back("version_minor");
+		return_types.push_back(LogicalType::UTINYINT);
+		names.emplace_back("system_id");
+		return_types.push_back(LogicalType::VARCHAR);
+		names.emplace_back("software_id");
+		return_types.push_back(LogicalType::VARCHAR);
+		names.emplace_back("creation_doy");
+		return_types.push_back(LogicalType::USMALLINT);
+		names.emplace_back("creation_year");
+		return_types.push_back(LogicalType::USMALLINT);
+
+		names.emplace_back("point_format");
+		return_types.push_back(LogicalType::UTINYINT);
+		names.emplace_back("point_offset");
+		return_types.push_back(LogicalType::UINTEGER);
+		names.emplace_back("point_len");
+		return_types.push_back(LogicalType::USMALLINT);
+
+		// Scale & Offset
+
+		names.emplace_back("scale_x");
+		return_types.push_back(LogicalType::DOUBLE);
+		names.emplace_back("scale_y");
+		return_types.push_back(LogicalType::DOUBLE);
+		names.emplace_back("scale_z");
+		return_types.push_back(LogicalType::DOUBLE);
+
+		names.emplace_back("offset_x");
+		return_types.push_back(LogicalType::DOUBLE);
+		names.emplace_back("offset_y");
+		return_types.push_back(LogicalType::DOUBLE);
+		names.emplace_back("offset_z");
+		return_types.push_back(LogicalType::DOUBLE);
+
+		// Returns info
+
+		names.emplace_back("number_of_point_records");
+		return_types.push_back(LogicalType::UINTEGER);
+		names.emplace_back("number_of_points_by_return");
+		return_types.push_back(LogicalType::LIST(LogicalType::UBIGINT));
+
+		// Get the filename list
+		const auto mfreader = MultiFileReader::Create(input.table_function);
+		const auto mflist = mfreader->CreateFileList(context, input.inputs[0], FileGlobOptions::ALLOW_EMPTY);
+		return make_uniq_base<FunctionData, BindData>(mflist->GetAllFiles());
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Init Global
+	//------------------------------------------------------------------------------------------------------------------
+
+	struct State final : GlobalTableFunctionState {
+		idx_t current_idx;
+		explicit State() : current_idx(0) {
+		}
+	};
+
+	static unique_ptr<GlobalTableFunctionState> Init(ClientContext &context, TableFunctionInitInput &input) {
+		return make_uniq_base<GlobalTableFunctionState, State>();
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Init Local
+	//------------------------------------------------------------------------------------------------------------------
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Execute
+	//------------------------------------------------------------------------------------------------------------------
+
+	static void Execute(ClientContext &context, TableFunctionInput &input, DataChunk &output) {
+
+		auto &bind_data = input.bind_data->Cast<BindData>();
+		auto &state = input.global_state->Cast<State>();
+
+		// Calculate how many record we can fit in the output
+		auto output_size = MinValue<idx_t>(STANDARD_VECTOR_SIZE, bind_data.files.size() - state.current_idx);
+
+		if (output_size == 0) {
+			output.SetCardinality(0);
+			return;
+		}
+
+		pdal::StageFactory stage_factory;
+
+		for (idx_t out_idx = 0; out_idx < output_size; out_idx++, state.current_idx++) {
+			auto file = bind_data.files[state.current_idx];
+			auto lower_path = StringUtil::Lower(file.path);
+
+			try {
+				pdal::Options read_options;
+				read_options.add("filename", file.path);
+
+				// Default LAS/LAZ Header fields values for the output
+
+				pdal::QuickInfo info = pdal::QuickInfo();
+				bool extra_header = false;
+				bool compressed = false;
+
+				std::string file_signature;
+				uint16_t file_source_id = 0;
+				uint16_t global_encoding = 0;
+				std::string project_id = "00000000-0000-0000-0000-000000000000";
+				uint8_t version_major = 0;
+				uint8_t version_minor = 0;
+				std::string system_id;
+				std::string software_id;
+				uint16_t creation_doy = 0;
+				uint16_t creation_year = 0;
+
+				uint8_t point_format = 0;
+				uint32_t point_offset = 0;
+				uint16_t point_len = 0;
+
+				double scale_x = 0.01;
+				double scale_y = 0.01;
+				double scale_z = 0.01;
+				double offset_x = 0.0;
+				double offset_y = 0.0;
+				double offset_z = 0.0;
+
+				uint32_t number_of_point_records = 0;
+				std::vector<uint64_t> number_of_points_by_return;
+
+				// Get the header data from the file
+
+				if (StringUtil::EndsWith(lower_path, ".las") || StringUtil::EndsWith(lower_path, ".laz")) {
+
+					pdal::LasReader reader;
+					reader.setOptions(read_options);
+
+					info = reader.preview();
+					const pdal::LasHeader &header = reader.header();
+
+					extra_header = true;
+					compressed = header.compressed();
+
+					file_signature = header.fileSignature();
+					file_source_id = header.fileSourceId();
+					global_encoding = header.globalEncoding();
+					project_id = header.projectId().toString();
+					version_major = header.versionMajor();
+					version_minor = header.versionMinor();
+					system_id = header.systemId();
+					software_id = header.softwareId();
+					creation_doy = header.creationDOY();
+					creation_year = header.creationYear();
+
+					point_format = header.pointFormat();
+					point_offset = header.pointOffset();
+					point_len = header.pointLen();
+
+					scale_x = header.scaleX();
+					scale_y = header.scaleY();
+					scale_z = header.scaleZ();
+					offset_x = header.offsetX();
+					offset_y = header.offsetY();
+					offset_z = header.offsetZ();
+
+					number_of_point_records = header.maxReturnCount();
+
+					for (size_t i = 0; i < number_of_point_records; i++) {
+						number_of_points_by_return.push_back(header.pointCountByReturn(i));
+					}
+				} else {
+					std::string driver = pdal::StageFactory::inferReaderDriver(file.path);
+					if (driver.length() == 0) {
+						throw InvalidInputException("File format not supported: %s", file.path);
+					}
+
+					pdal::Stage *reader = stage_factory.createStage(driver);
+					if (!reader) {
+						throw InvalidInputException("Driver not found for file: %s", file.path);
+					}
+					reader->setOptions(read_options);
+
+					info = reader->preview();
+
+					stage_factory.destroyStage(reader);
+				}
+
+				// Finally fill the output values
+
+				int attr_idx = 0;
+				output.data[attr_idx++].SetValue(out_idx, file.path);
+
+				// General Point Cloud fields
+
+				output.data[attr_idx++].SetValue(out_idx, Value::UBIGINT(info.m_pointCount));
+				output.data[attr_idx++].SetValue(out_idx, info.m_bounds.minx);
+				output.data[attr_idx++].SetValue(out_idx, info.m_bounds.miny);
+				output.data[attr_idx++].SetValue(out_idx, info.m_bounds.minz);
+				output.data[attr_idx++].SetValue(out_idx, info.m_bounds.maxx);
+				output.data[attr_idx++].SetValue(out_idx, info.m_bounds.maxy);
+				output.data[attr_idx++].SetValue(out_idx, info.m_bounds.maxz);
+				output.data[attr_idx++].SetValue(out_idx, info.m_srs.getWKT());
+
+				// LAS/LAZ Header fields
+
+				output.data[attr_idx++].SetValue(out_idx, Value::BOOLEAN(extra_header));
+				output.data[attr_idx++].SetValue(out_idx, Value::BOOLEAN(compressed));
+
+				output.data[attr_idx++].SetValue(out_idx, file_signature);
+				output.data[attr_idx++].SetValue(out_idx, Value::USMALLINT(file_source_id));
+				output.data[attr_idx++].SetValue(out_idx, Value::USMALLINT(global_encoding));
+				output.data[attr_idx++].SetValue(out_idx, Value::UUID(project_id));
+				output.data[attr_idx++].SetValue(out_idx, Value::UTINYINT(version_major));
+				output.data[attr_idx++].SetValue(out_idx, Value::UTINYINT(version_minor));
+				output.data[attr_idx++].SetValue(out_idx, system_id);
+				output.data[attr_idx++].SetValue(out_idx, software_id);
+				output.data[attr_idx++].SetValue(out_idx, Value::USMALLINT(creation_doy));
+				output.data[attr_idx++].SetValue(out_idx, Value::USMALLINT(creation_year));
+
+				output.data[attr_idx++].SetValue(out_idx, Value::UTINYINT(point_format));
+				output.data[attr_idx++].SetValue(out_idx, Value::UINTEGER(point_offset));
+				output.data[attr_idx++].SetValue(out_idx, Value::USMALLINT(point_len));
+
+				// Scale & Offset
+
+				output.data[attr_idx++].SetValue(out_idx, scale_x);
+				output.data[attr_idx++].SetValue(out_idx, scale_y);
+				output.data[attr_idx++].SetValue(out_idx, scale_z);
+				output.data[attr_idx++].SetValue(out_idx, offset_x);
+				output.data[attr_idx++].SetValue(out_idx, offset_y);
+				output.data[attr_idx++].SetValue(out_idx, offset_z);
+
+				// Returns info
+
+				output.data[attr_idx++].SetValue(out_idx, Value::UINTEGER(number_of_point_records));
+
+				if (number_of_point_records > 0) {
+					auto total_count = ListVector::GetListSize(output.data[attr_idx]);
+					ListVector::Reserve(output.data[attr_idx], total_count + number_of_point_records);
+					ListVector::SetListSize(output.data[attr_idx], total_count + number_of_point_records);
+
+					auto &ref_entry = ListVector::GetData(output.data[attr_idx])[out_idx];
+					auto &ref_vector = ListVector::GetEntry(output.data[attr_idx]);
+					ref_entry.offset = total_count;
+					ref_entry.length = number_of_point_records;
+
+					auto ref_data = FlatVector::GetData<uint64_t>(ref_vector);
+
+					for (size_t i = 0; i < number_of_point_records; i++) {
+						ref_data[total_count + i] = number_of_points_by_return[i];
+					}
+					attr_idx++;
+				} else {
+					FlatVector::SetNull(output.data[attr_idx], out_idx, true);
+					attr_idx++;
+				}
+
+			} catch (...) {
+				// Just skip anything we cant open
+				out_idx--;
+				output_size--;
+				continue;
+			}
+		}
+		output.SetCardinality(output_size);
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Cardinality
+	//------------------------------------------------------------------------------------------------------------------
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Replacement Scan
+	//------------------------------------------------------------------------------------------------------------------
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Documentation
+	//------------------------------------------------------------------------------------------------------------------
+
+	static constexpr auto DESCRIPTION = R"(
+		Read the metadata from a point cloud file.
+
+		The `PDAL_Info` table function accompanies the `PDAL_Read` table function, but instead of reading the contents of a file, this function scans the metadata instead.
+	)";
+
+	static constexpr auto EXAMPLE = R"(
+		SELECT * FROM PDAL_Info('./test/data/autzen_trim.laz');
+	)";
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Register
+	//------------------------------------------------------------------------------------------------------------------
+
+	static void Register(ExtensionLoader &loader) {
+
+		InsertionOrderPreservingMap<string> tags;
+		tags.insert("ext", "pdal");
+		tags.insert("category", "table");
+
+		const TableFunction func("PDAL_Info", {LogicalType::VARCHAR}, Execute, Bind, Init);
+
+		RegisterFunction<TableFunction>(loader, func, CatalogType::TABLE_FUNCTION_ENTRY, DESCRIPTION, EXAMPLE, tags);
+	}
+};
+
+//======================================================================================================================
 // PDAL_Read
 //======================================================================================================================
 
@@ -517,6 +875,7 @@ struct PDAL_Read {
 void PdalTableFunctions::Register(ExtensionLoader &loader) {
 
 	PDAL_Drivers::Register(loader);
+	PDAL_Info::Register(loader);
 	PDAL_Read::Register(loader);
 }
 

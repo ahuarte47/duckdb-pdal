@@ -1,0 +1,54 @@
+# name: test/sql/pdal_info.test
+# description: test pdal extension
+# group: [sql]
+
+require pdal
+
+query IIIIIIIIIIIIIIIIIII
+SELECT
+	file_name,
+	point_count,
+	min_x,
+	min_y,
+	min_z,
+	max_x,
+	max_y,
+	max_z,
+	extra_header,
+	scale_x,
+	scale_y,
+	scale_z,
+	offset_x,
+	offset_y,
+	offset_z,
+	point_format,
+	point_offset,
+	point_len,
+	srs_wkt
+FROM
+	PDAL_Info('./test/data/autzen_trim.la*')
+ORDER BY
+	file_name
+;
+----
+./test/data/autzen_trim.las	110000	636001.76	848935.20	406.26	637179.22	849497.90	520.51	true	0.01	0.01	0.01	0.0	0.0	0.0	3	2038	34	PROJCS["NAD_1983_HARN_Lambert_Conformal_Conic",GEOGCS["NAD83(HARN)",DATUM["NAD83_High_Accuracy_Reference_Network",SPHEROID["GRS 1980",6378137,298.257222101004,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6152"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["latitude_of_origin",41.75],PARAMETER["central_meridian",-120.5],PARAMETER["standard_parallel_1",43],PARAMETER["standard_parallel_2",45.5],PARAMETER["false_easting",1312335.95800525],PARAMETER["false_northing",0],UNIT["foot",0.3048,AUTHORITY["EPSG","9002"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]
+./test/data/autzen_trim.laz	110000	636001.76	848935.20	406.26	637179.22	849497.90	520.51	true	0.01	0.01	0.01	0.0	0.0	0.0	3	2144	34	PROJCS["NAD_1983_HARN_Lambert_Conformal_Conic",GEOGCS["NAD83(HARN)",DATUM["NAD83_High_Accuracy_Reference_Network",SPHEROID["GRS 1980",6378137,298.257222101004,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6152"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["latitude_of_origin",41.75],PARAMETER["central_meridian",-120.5],PARAMETER["standard_parallel_1",43],PARAMETER["standard_parallel_2",45.5],PARAMETER["false_easting",1312335.95800525],PARAMETER["false_northing",0],UNIT["foot",0.3048,AUTHORITY["EPSG","9002"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]
+
+query IIIIIIIIIII
+SELECT
+	file_name,
+	extra_header,
+	scale_x,
+	scale_y,
+	scale_z,
+	offset_x,
+	offset_y,
+	offset_z,
+	point_format,
+	point_offset,
+	point_len
+FROM
+	PDAL_Info('./test/data/autzen-utm.bpf')
+;
+----
+./test/data/autzen-utm.bpf	false	0.01	0.01	0.01	0.0	0.0	0.0	0	0	0
