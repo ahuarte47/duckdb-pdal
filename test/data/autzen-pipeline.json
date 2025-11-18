@@ -1,0 +1,12 @@
+{
+    "pipeline": [
+        {
+            "type": "filters.ferry",
+            "dimensions": "Z => HeightAboveGround"
+        },
+        {
+            "type": "filters.tail",
+            "count": 100
+        }
+    ]
+}

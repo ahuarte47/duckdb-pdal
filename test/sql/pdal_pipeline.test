@@ -1,0 +1,14 @@
+# name: test/sql/pdal_pipeline.test
+# description: test pdal extension
+# group: [sql]
+
+require pdal
+
+query I
+SELECT
+	COUNT(*)
+FROM
+	PDAL_pipeline('./test/data/autzen_trim.las', './test/data/autzen-pipeline.json')
+;
+----
+100
