@@ -1,0 +1,43 @@
+# name: test/sql/pdal_read.test
+# description: test pdal extension
+# group: [sql]
+
+require pdal
+
+query I
+SELECT
+	COUNT(*)
+FROM
+	PDAL_Read('./test/data/autzen_trim.laz')
+;
+----
+110000
+
+query IIIIII
+SELECT
+	X, Y, Z, Red, Green, Blue
+FROM
+	PDAL_Read('./test/data/autzen_trim.laz')
+LIMIT 1
+;
+----
+637177.98	849393.95	411.19	84	102	93
+
+query I
+SELECT
+	COUNT(*)
+FROM
+	PDAL_Read('./test/data/autzen_trim.las')
+;
+----
+110000
+
+query IIIIII
+SELECT
+	X, Y, Z, Red, Green, Blue
+FROM
+	PDAL_Read('./test/data/autzen_trim.las')
+LIMIT 1
+;
+----
+637177.98	849393.95	411.19	84	102	93

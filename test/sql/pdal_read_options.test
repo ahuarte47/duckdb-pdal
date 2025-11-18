@@ -1,0 +1,15 @@
+# name: test/sql/pdal_read_options.test
+# description: test pdal extension
+# group: [sql]
+
+require pdal
+
+query IIIIII
+SELECT
+	X, Y, Z, Red, Green, Blue
+FROM
+	PDAL_Read('./test/data/autzen_trim.las', options => MAP {'start': 10})
+LIMIT 1
+;
+----
+637173.82	849395.08	411.22	79	94	88
