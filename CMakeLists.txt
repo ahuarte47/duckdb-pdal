@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # DuckDB's extension distribution supports vcpkg. As such, dependencies can be added in ./vcpkg.json and then
 # used in cmake with find_package. Feel free to remove or replace with other dependencies.
-# Note that it should also be removed from vcpkg.json to prevent needlessly installing it..
+# Note that it should also be removed from vcpkg.json to prevent needlessly installing it.
 find_package(GDAL CONFIG REQUIRED)
 find_package(PDAL CONFIG REQUIRED)
 

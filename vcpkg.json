@@ -1,10 +1,14 @@
 {
     "dependencies": [
+        "openssl",
+        "zlib",
+        "geos",
+        "expat",
         {
             "name": "gdal",
             "default-features": false,
             "features": [
-                "arrow","curl","expat","geos","gif","hdf5","iconv","jpeg","lerc","libkml","libspatialite","libxml2","lzma","netcdf","openjpeg","openssl","pcre2","png","parquet","qhull","recommended-features","sqlite3","webp","zstd"
+                "arrow","curl","expat","geos","gif","hdf5","jpeg","lzma","openjpeg","openssl","parquet","png","sqlite3","zstd"
             ]
         },
         {
