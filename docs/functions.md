@@ -16,6 +16,9 @@
 | Function | Summary |
 | --- | --- |
 | [`PDAL_Drivers`](#pdal_drivers) |  |
+| [`PDAL_Info`](#pdal_info) |  |
+| [`PDAL_Pipeline`](#pdal_pipeline) |  |
+| [`PDAL_Read`](#pdal_read) |  |
 
 ----
 
@@ -69,6 +72,97 @@ PDAL_Drivers ()
 		├─────────────────────────────┴─────────────────────────────────────────────────────────────────────────────────┤
 		│ 119 rows                                                                                            2 columns │
 		└───────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+	
+```
+
+----
+
+### PDAL_Info
+
+#### Signature
+
+```sql
+PDAL_Info (col0 VARCHAR)
+```
+
+#### Description
+
+
+		Read the metadata from a point cloud file.
+
+		The `PDAL_Info` table function accompanies the `PDAL_Read` table function, but instead of reading the contents of a file, this function scans the metadata instead.
+	
+
+#### Example
+
+```sql
+
+		SELECT * FROM PDAL_Info('./test/data/autzen_trim.laz');
+	
+```
+
+----
+
+### PDAL_Pipeline
+
+#### Signature
+
+```sql
+PDAL_Pipeline (col0 VARCHAR, col1 VARCHAR, options MAP(VARCHAR, VARCHAR))
+```
+
+#### Description
+
+
+		Read and import a variety of point cloud data file formats using the PDAL library,
+		applying also a custom processing pipeline file to the data.
+	
+
+#### Example
+
+```sql
+
+		SELECT * FROM PDAL_Pipeline('path/to/your/filename.las', 'path/to/your/pipeline.json');
+	
+```
+
+----
+
+### PDAL_Read
+
+#### Signature
+
+```sql
+PDAL_Read (col0 VARCHAR, options MAP(VARCHAR, VARCHAR))
+```
+
+#### Description
+
+
+		Read and import a variety of point cloud data file formats using the PDAL library.
+	
+
+#### Example
+
+```sql
+
+		SELECT * FROM PDAL_Read('path/to/your/filename.las') LIMIT 10;
+
+		┌───────────┬───────────┬────────┐
+		│     X     │     Y     │   Z    │
+		│   double  │   double  │ double │
+		├───────────┼───────────┼────────┤
+		│ 637177.98 │ 849393.95 │ 411.19 │
+		│ 637177.30 │ 849396.95 │ 411.25 │
+		│ 637176.34 │ 849400.84 │ 411.01 │
+		│ 637175.45 │ 849404.62 │ 410.99 │
+		│ 637174.33 │ 849407.37 │ 411.38 │
+		└───────────┴───────────┴────────┘
+
+		SELECT * FROM PDAL_Read('path/to/your/filename.las', options => MAP {'start': 10});
+
+		Optional Options parameter can be used to pass reader-specific options as key-value pairs.
+		For example, for the LAS/LAZ reader, the options are documented at https://pdal.io/en/stable/stages/readers.las.html#options
 	
 ```
 
