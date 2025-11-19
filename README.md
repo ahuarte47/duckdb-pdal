@@ -1,5 +1,7 @@
 # DuckDB Point Cloud Extension
 
+🚧 WORK IN PROGRESS 🚧
+
 ## What is this?
 
 This is an extension for DuckDB for manipulating point cloud data using SQL.
@@ -8,7 +10,17 @@ The extension is built on top of [PDAL (Point Data Abstraction Library)](https:/
 
 ## How do I get it?
 
-TODO
+### (TODO) Loading from community
+
+The DuckDB **Point Cloud Extension** is available as a signed [community extension](https://duckdb.org/community_extensions/list_of_extensions).
+See more details on its [DuckDB CE web page](https://duckdb.org/community_extensions/extensions/pdal.html).
+
+To install and load it, you can run the following SQL commands in DuckDB:
+
+```sql
+INSTALL pdal FROM community;
+LOAD pdal;
+```
 
 ### Building from source
 
@@ -16,7 +28,72 @@ This extension is based on the [DuckDB extension template](https://github.com/du
 
 ## Example Usage
 
-TODO
+You can use the extension to read point cloud data from various formats (e.g., LAS, LAZ, etc.) and perform spatial queries on them.
+
+First, make sure to load the extension in your DuckDB session.
+
++ ### PDAL_Read
+
+    You can read point cloud data from a file with:
+
+    ```sql
+    SELECT
+        *
+    FROM
+        PDAL_Read('path/to/your/pointcloud.las')
+    ;
+    ```
+
+    Setting options is also possible. For example, to read a subset of points starting from index 10:
+
+    ```sql
+    SELECT
+        X, Y, Z, Red, Green, Blue
+    FROM
+        PDAL_Read('./test/data/autzen_trim.laz', options => MAP {'start': 10})
+    ;
+    ```
+
++ ### PDAL_Info
+
+    To get information about the point cloud file without reading all the data, you can use the `PDAL_Info` function.
+
+    For example:
+
+    ```sql
+    SELECT
+        *
+    FROM
+        PDAL_Info('./test/data/autzen_trim.la*')
+    ;
+    ```
+
++ ### PDAL_Pipeline
+
+    You could use the `PDAL_Pipeline` function to run a PDAL pipeline before getting the data:
+
+    ```sql
+    SELECT
+        COUNT(*)
+    FROM
+        PDAL_pipeline('./test/data/autzen_trim.las', './test/data/autzen-pipeline.json')
+    ;
+    ```
+
+    The pipeline file can contain any valid PDAL pipeline definition. See the [PDAL documentation](https://pdal.io/en/stable/pipeline.html) for more details.
+
+    For example, the following pipeline returns only the last 100 points:
+
+    ```json
+    {
+        "pipeline": [
+            {
+                "type": "filters.tail",
+                "count": 100
+            }
+        ]
+    }
+    ```
 
 ### Supported Functions and Documentation
 
