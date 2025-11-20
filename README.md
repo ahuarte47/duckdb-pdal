@@ -32,6 +32,64 @@ You can use the extension to read point cloud data from various formats (e.g., L
 
 First, make sure to load the extension in your DuckDB session.
 
++ ### PDAL_Drivers
+
+    Returns the list of supported stage types of a PDAL Pipeline.
+
+	The stages of a PDAL Pipeline are divided into Readers, Filters and Writers: https://pdal.io/en/stable/stages/stages.html
+
+    ```sql
+    SELECT * FROM PDAL_Drivers();
+
+    ┌─────────────────────────────┬─────────────────────────────────────────────────────────────────────────────────┬───────────┐
+    │            name             │                                     description                                 │  category │
+    │           varchar           │                                       varchar                                   │  varchar  │
+    ├─────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────┼───────────┤
+    │ filters.approximatecoplanar │ Estimates the planarity of a neighborhood of points using eigenvalues.          │  filters  │
+    │ filters.assign              │ Assign values for a dimension range to a specified value.                       │  filters  │
+    │ filters.chipper             │ Organize points into spatially contiguous, squarish, and non-overlapping chips. │  filters  │
+    │ filters.cluster             │ Extract and label clusters using Euclidean distance.                            │  filters  │
+    │ filters.colorinterp         │ Assigns RGB colors based on a dimension and a ramp                              │  filters  │
+    │ filters.colorization        │ Fetch and assign RGB color information from a GDAL-readable datasource.         │  filters  │
+    │ filters.crop                │ Filter points inside or outside a bounding box or a polygon                     │  filters  │
+    │ filters.csf                 │ Cloth Simulation Filter (Zhang et al., 2016)                                    │  filters  │
+    │ filters.dbscan              │ DBSCAN Clustering.                                                              │  filters  │
+    │ filters.decimation          │ Rank decimation filter. Keep every Nth point                                    │  filters  │
+    │ filters.delaunay            │ Perform Delaunay triangulation of a pointcloud                                  │  filters  │
+    │ filters.dem                 │ Filter points about an elevation surface                                        │  filters  │
+    │ filters.divider             │ Divide points into approximately equal sized groups based on a simple scheme    │  filters  │
+    │ filters.eigenvalues         │ Returns the eigenvalues for a given point, based on its k-nearest neighbors.    │  filters  │
+    │ filters.elm                 │ Marks low points as noise.                                                      │  filters  │
+    │ filters.estimaterank        │ Computes the rank of a neighborhood of points.                                  │  filters  │
+    │ filters.expression          │ Pass only points given an expression                                            │  filters  │
+    │ filters.expressionstats     │ Accumulate count statistics for a given dimension for an array of expressions   │  filters  │
+    │ filters.faceraster          │ Face Raster Filter                                                              │  filters  │
+    │      ·                      │      ·                                                                          │     ·     │
+    │      ·                      │      ·                                                                          │     ·     │
+    │      ·                      │      ·                                                                          │     ·     │
+    │ readers.slpk                │ SLPK Reader                                                                     │  readers  │
+    │ readers.smrmsg              │ SBET smrmsg Reader                                                              │  readers  │
+    │ readers.stac                │ STAC Reader                                                                     │  readers  │
+    │ readers.terrasolid          │ TerraSolid Reader                                                               │  readers  │
+    │ readers.text                │ Text Reader                                                                     │  readers  │
+    │ readers.tindex              │ TileIndex Reader                                                                │  readers  │
+    │ writers.copc                │ COPC Writer                                                                     │  writers  │
+    │ writers.ept_addon           │ EPT Writer                                                                      │  writers  │
+    │ writers.fbi                 │ FBI Writer                                                                      │  writers  │
+    │ writers.gdal                │ Write a point cloud as a GDAL raster.                                           │  writers  │
+    │ writers.gltf                │ Gltf Writer                                                                     │  writers  │
+    │ writers.las                 │ ASPRS LAS 1.0 - 1.4 writer                                                      │  writers  │
+    │ writers.ogr                 │ Write a point cloud as a set of OGR points/multipoints                          │  writers  │
+    │ writers.pcd                 │ Write data in the Point Cloud Library (PCL) format.                             │  writers  │
+    │ writers.ply                 │ ply writer                                                                      │  writers  │
+    │ writers.raster              │ Write a raster.                                                                 │  writers  │
+    │ writers.sbet                │ SBET Writer                                                                     │  writers  │
+    │ writers.text                │ Text Writer                                                                     │  writers  │
+    ├─────────────────────────────┴─────────────────────────────────────────────────────────────────────────────────┴───────────┤
+    │ 119 rows (40 shown)                                                                                             3 columns │
+    └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    ```
+
 + ### PDAL_Read
 
     You can read point cloud data from a file with:
@@ -42,6 +100,17 @@ First, make sure to load the extension in your DuckDB session.
     FROM
         PDAL_Read('path/to/your/pointcloud.las')
     ;
+
+    ┌───────────┬───────────┬────────┬───────┐
+    │     X     │     Y     │   Z    │       │
+    │   double  │   double  │ double │  ...  │
+    ├───────────┼───────────┼────────┤───────┤
+    │ 637177.98 │ 849393.95 │ 411.19 │  ...  │
+    │ 637177.30 │ 849396.95 │ 411.25 │  ...  │
+    │ 637176.34 │ 849400.84 │ 411.01 │  ...  │
+    │ 637175.45 │ 849404.62 │ 410.99 │  ...  │
+    │ 637174.33 │ 849407.37 │ 411.38 │  ...  │
+    └───────────┴───────────┴────────┴───────┘
     ```
 
     Setting options is also possible. For example, to read a subset of points starting from index 10:
@@ -52,6 +121,24 @@ First, make sure to load the extension in your DuckDB session.
     FROM
         PDAL_Read('./test/data/autzen_trim.laz', options => MAP {'start': 10})
     ;
+
+    ┌───────────┬───────────┬─────────┬────────┬────────┬────────┐
+    │     X     │    Y      │    Z    │  Red   │ Green  │  Blue  │
+    │   double  │  double   │  double │ uint16 │ uint16 │ uint16 │
+    ├───────────┼───────────┼─────────┼────────┼────────┼────────┤
+    │ 637173.82 │ 849395.08 │   11.22 │     79 │     94 │     88 │
+    │ 637171.38 │ 849403.41 │  411.15 │     78 │     95 │     90 │
+    │ 637172.27 │ 849399.57 │  411.22 │     80 │     94 │     89 │
+    │ 637173.87 │ 849392.61 │  411.12 │     77 │     93 │     86 │
+    │ 637176.11 │ 849383.07 │  411.29 │     80 │    100 │     90 │
+    │     ·     │     ·     │     ·   │      · │      · │      · │
+    │     ·     │     ·     │     ·   │      · │      · │      · │
+    │     ·     │     ·     │     ·   │      · │      · │      · │
+    │ 637173.82 │ 849395.08 │  411.22 │     79 │     94 │     88 │
+    │ 637173.82 │ 849395.08 │  411.22 │     79 │     94 │     88 │
+    ├───────────┴───────────┴─────────┴────────┴────────┴────────┤
+    │ 110000 rows (40 shown)                           6 columns │
+    └────────────────────────────────────────────────────────────┘
     ```
 
 + ### PDAL_Info
@@ -66,6 +153,16 @@ First, make sure to load the extension in your DuckDB session.
     FROM
         PDAL_Info('./test/data/autzen_trim.la*')
     ;
+
+    ┌──────────────────────┬─────────────┬───────────┬───────────┬────────┬───┬──────────┬──────────┬──────────┐
+    │      file_name       │ point_count │   min_x   │  min_y    │ min_z  │ … │ offset_x │ offset_y │ offset_z │
+    │       varchar        │   uint64    │  double   │ double    │ double │   │  double  │  double  │  double  │
+    ├──────────────────────┼─────────────┼───────────┼───────────┼────────┼───┼──────────┼──────────┼──────────┤
+    │ ./test/data/autzen…  │      110000 │ 636001.76 │ 848935.20 │ 406.26 │ … │      0.0 │      0.0 │      0.0 │
+    │ ./test/data/autzen…  │      110000 │ 636001.76 │ 848935.20 │ 406.26 │ … │      0.0 │      0.0 │      0.0 │
+    ├──────────────────────┴─────────────┴───────────┴───────────┴────────┴───┴──────────┴──────────┴──────────┤
+    │ 2 rows                                                                             32 columns (10 shown) │
+    └──────────────────────────────────────────────────────────────────────────────────────────────────────────┘
     ```
 
 + ### PDAL_Pipeline
@@ -78,6 +175,13 @@ First, make sure to load the extension in your DuckDB session.
     FROM
         PDAL_pipeline('./test/data/autzen_trim.las', './test/data/autzen-pipeline.json')
     ;
+
+    ┌──────────────┐
+    │ count_star() │
+    │    int64     │
+    ├──────────────┤
+    │     100      │
+    └──────────────┘
     ```
 
     The pipeline file can contain any valid PDAL pipeline definition. See the [PDAL documentation](https://pdal.io/en/stable/pipeline.html) for more details.
