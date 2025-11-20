@@ -27,3 +27,15 @@ readers.copc
 readers.las
 writers.copc
 writers.las
+
+query I
+SELECT
+    name
+FROM
+    PDAL_Drivers()
+WHERE
+    name = 'filters.assign' AND category = 'filters'
+ORDER BY
+    name;
+----
+filters.assign

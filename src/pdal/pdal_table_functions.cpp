@@ -199,6 +199,8 @@ struct PDAL_Drivers {
 		return_types.push_back(LogicalType::VARCHAR);
 		names.emplace_back("description");
 		return_types.push_back(LogicalType::VARCHAR);
+		names.emplace_back("category");
+		return_types.push_back(LogicalType::VARCHAR);
 
 		pdal::PluginManager<pdal::Stage>::loadAll();
 		std::vector<std::string> pdal_stages = pdal::PluginManager<pdal::Stage>::names();
@@ -238,7 +240,15 @@ struct PDAL_Drivers {
 			std::string description = pdal::PluginManager<pdal::Stage>::description(name);
 
 			output.data[0].SetValue(count, name);
-			output.data[1].SetValue(count, description);
+			output.data[1].SetValue(count, StringUtil::Replace(description, "\n", ""));
+
+			std::size_t pos = name.find('.');
+
+			if (pos == std::string::npos) {
+				output.data[2].SetValue(count, "unknown");
+			} else {
+				output.data[2].SetValue(count, name.substr(0, pos));
+			}
 			count++;
 		}
 		output.SetCardinality(count);
