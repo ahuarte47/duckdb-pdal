@@ -14,6 +14,7 @@
 #include <pdal/PluginManager.hpp>
 #include <pdal/Stage.hpp>
 #include <pdal/StageFactory.hpp>
+#include <pdal/io/BufferReader.hpp>
 #include <pdal/io/LasHeader.hpp>
 #include <pdal/io/LasReader.hpp>
 #include <pdal/util/FileUtils.hpp>
@@ -43,7 +44,8 @@ struct PDAL_Utils {
 	}
 
 	// Extract the PDAL PointLayout into DuckDB return types and names.
-	static void ExtractLayout(pdal::PointLayoutPtr layout, vector<LogicalType> &return_types, vector<string> &names) {
+	static void ExtractLayout(const pdal::PointLayoutPtr layout, vector<LogicalType> &return_types,
+	                          vector<string> &names) {
 
 		for (const auto &dimId : layout->dims()) {
 			std::string name = layout->dimName(dimId);
@@ -98,6 +100,64 @@ struct PDAL_Utils {
 				throw InvalidInputException("Field type %d not supported", t);
 			}
 		}
+	}
+
+	// Fill a PDAL PointLayout by mapping DuckDB SQL types to PDAL types.
+	static std::vector<idx_t> FillLayout(pdal::PointLayoutPtr layout, const vector<LogicalType> &sql_types,
+	                                     const vector<string> &names, Logger &logger) {
+
+		if (sql_types.size() != names.size()) {
+			throw InvalidInputException("SQL types and names size mismatch");
+		}
+
+		std::vector<idx_t> field_indexes;
+
+		for (idx_t i = 0; i < sql_types.size(); i++) {
+			const auto &sql_type = sql_types[i];
+			const auto &name = names[i];
+
+			switch (sql_type.id()) {
+			case LogicalTypeId::FLOAT:
+				layout->registerOrAssignDim(name, pdal::Dimension::Type::Float);
+				break;
+			case LogicalTypeId::DOUBLE:
+				layout->registerOrAssignDim(name, pdal::Dimension::Type::Double);
+				break;
+
+			case LogicalTypeId::TINYINT:
+				layout->registerOrAssignDim(name, pdal::Dimension::Type::Signed8);
+				break;
+			case LogicalTypeId::SMALLINT:
+				layout->registerOrAssignDim(name, pdal::Dimension::Type::Signed16);
+				break;
+			case LogicalTypeId::INTEGER:
+				layout->registerOrAssignDim(name, pdal::Dimension::Type::Signed32);
+				break;
+			case LogicalTypeId::BIGINT:
+				layout->registerOrAssignDim(name, pdal::Dimension::Type::Signed64);
+				break;
+
+			case LogicalTypeId::UTINYINT:
+				layout->registerOrAssignDim(name, pdal::Dimension::Type::Unsigned8);
+				break;
+			case LogicalTypeId::USMALLINT:
+				layout->registerOrAssignDim(name, pdal::Dimension::Type::Unsigned16);
+				break;
+			case LogicalTypeId::UINTEGER:
+				layout->registerOrAssignDim(name, pdal::Dimension::Type::Unsigned32);
+				break;
+			case LogicalTypeId::UBIGINT:
+				layout->registerOrAssignDim(name, pdal::Dimension::Type::Unsigned64);
+				break;
+
+			default:
+				logger.WriteLog("pdal", LogLevel::LOG_WARN, "Field type '%s' not supported, skipping dimension '%s'.",
+				                sql_type.ToString().c_str(), name.c_str());
+				continue;
+			}
+			field_indexes.push_back(i);
+		}
+		return field_indexes;
 	}
 
 	// Write a chunk of points from a PDAL PointView into a DuckDB DataChunk.
@@ -265,7 +325,7 @@ struct PDAL_Drivers {
 	)";
 
 	static constexpr auto EXAMPLE = R"(
-		SELECT * FROM PDAL_Drivers();
+		SELECT name, description FROM PDAL_Drivers();
 
 		┌─────────────────────────────┬─────────────────────────────────────────────────────────────────────────────────┐
 		│            name             │                                     description                                 │
@@ -727,6 +787,7 @@ struct PDAL_Read {
 		// Load the point data into a PointViewSet.
 
 		pdal::PointViewSet views = reader->execute(*table);
+		pdal::point_count_t point_count = reader->preview().m_pointCount;
 
 		// Create and return bind data.
 
@@ -735,7 +796,7 @@ struct PDAL_Read {
 		result->stage_factory = std::move(stage_factory);
 		result->table = std::move(table);
 		result->views = std::move(views);
-		result->point_count = reader->preview().m_pointCount;
+		result->point_count = point_count;
 
 		return std::move(result);
 	};
@@ -941,7 +1002,7 @@ struct PDAL_Pipeline {
 
 		// Run the PDAL pipeline from the JSON file.
 
-		pdal::point_count_t total_points = pipeline->execute();
+		pdal::point_count_t point_count = pipeline->execute();
 		pdal::PointViewPtr view = *(pipeline->views().begin());
 
 		pdal::PointLayoutPtr layout = view->layout();
@@ -952,7 +1013,7 @@ struct PDAL_Pipeline {
 		auto result = make_uniq<BindData>();
 		result->file_name = file_name;
 		result->pipeline = std::move(pipeline);
-		result->point_count = total_points;
+		result->point_count = point_count;
 
 		return std::move(result);
 	};
@@ -1056,6 +1117,259 @@ struct PDAL_Pipeline {
 	}
 };
 
+//======================================================================================================================
+// PDAL_Write
+//======================================================================================================================
+
+struct PDAL_Write {
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Bind
+	//------------------------------------------------------------------------------------------------------------------
+
+	struct BindData : public TableFunctionData {
+
+		string file_name;
+		vector<LogicalType> field_sql_types;
+		vector<string> field_names;
+		std::vector<idx_t> field_indexes;
+
+		std::unique_ptr<pdal::StageFactory> stage_factory;
+		std::unique_ptr<pdal::BufferReader> reader;
+		pdal::Stage *writer = nullptr;
+		std::unique_ptr<pdal::PointTable> table;
+		std::shared_ptr<pdal::PointView> view;
+
+		BindData(string file_name, vector<LogicalType> field_sql_types, vector<string> field_names)
+		    : file_name(std::move(file_name)), field_sql_types(std::move(field_sql_types)),
+		      field_names(std::move(field_names)) {
+		}
+	};
+
+	static unique_ptr<FunctionData> Bind(ClientContext &context, CopyFunctionBindInput &input,
+	                                     const vector<string> &names, const vector<LogicalType> &sql_types) {
+
+		auto bind_data = make_uniq<BindData>(input.info.file_path, sql_types, names);
+
+		std::string file_name = input.info.file_path;
+		std::string driver_name;
+
+		pdal::Options writer_options;
+		writer_options.add("filename", file_name);
+
+		// Check all the options in the copy info and set.
+
+		for (auto &option : input.info.options) {
+			if (StringUtil::Upper(option.first) == "DRIVER") {
+				auto set = option.second.front();
+				if (set.type().id() == LogicalTypeId::VARCHAR) {
+					driver_name = StringUtil::Lower(set.GetValue<string>());
+
+					if (!StringUtil::StartsWith(driver_name, "writers.")) {
+						driver_name = "writers." + driver_name;
+					}
+				} else {
+					throw BinderException("Driver name must be a string");
+				}
+			} else if (StringUtil::Upper(option.first) == "CREATION_OPTIONS") {
+				auto set = option.second;
+				for (auto &s : set) {
+					if (s.type().id() != LogicalTypeId::VARCHAR) {
+						throw BinderException("Creation options must be strings");
+					}
+					auto kv_pair = StringUtil::Split(s.GetValue<string>(), '=');
+					if (kv_pair.size() != 2) {
+						throw InvalidInputException("Invalid input passed to options parameter");
+					}
+					writer_options.add(StringUtil::Lower(kv_pair[0]), kv_pair[1]);
+				}
+			} else {
+				throw BinderException("Unknown option '%s'", option.first);
+			}
+		}
+
+		if (driver_name.empty()) {
+			driver_name = pdal::StageFactory::inferWriterDriver(file_name);
+		}
+		if (driver_name.empty()) {
+			throw BinderException("Driver name must be specified");
+		}
+
+		// Create the PDAL reader & writer and prepare the target table.
+
+		std::unique_ptr<pdal::StageFactory> stage_factory = std::make_unique<pdal::StageFactory>();
+
+		std::unique_ptr<pdal::BufferReader> reader = std::make_unique<pdal::BufferReader>();
+		if (!reader) {
+			throw InvalidInputException("Driver 'readers.buffer' was not found in PDAL installation");
+		}
+
+		pdal::Stage *writer = stage_factory->createStage(driver_name);
+		if (!writer) {
+			throw InvalidInputException("Driver not found for file: %s", file_name);
+		}
+
+		std::unique_ptr<pdal::PointTable> table = std::make_unique<pdal::PointTable>();
+		std::shared_ptr<pdal::PointView> view = std::make_shared<pdal::PointView>(*table);
+
+		reader->addView(view);
+		writer->setInput(*reader);
+		writer->setOptions(writer_options);
+		writer->prepare(*table);
+
+		// Fill the layout by mapping SQL types to PDAL types.
+
+		pdal::PointLayoutPtr layout = table->layout();
+		auto &logger = Logger::Get(context);
+
+		std::vector<idx_t> field_indexes = PDAL_Utils::FillLayout(layout, sql_types, names, logger);
+		bind_data->field_indexes = std::move(field_indexes);
+
+		// Return bind data.
+
+		bind_data->stage_factory = std::move(stage_factory);
+		bind_data->reader = std::move(reader);
+		bind_data->writer = writer;
+		bind_data->table = std::move(table);
+		bind_data->view = std::move(view);
+
+		return std::move(bind_data);
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Init Global
+	//------------------------------------------------------------------------------------------------------------------
+
+	struct GlobalState final : GlobalFunctionData {
+		explicit GlobalState(ClientContext &context) {
+		}
+	};
+
+	static unique_ptr<GlobalFunctionData> InitGlobal(ClientContext &context, FunctionData &fdata,
+	                                                 const string &file_path) {
+		auto global_data = make_uniq<GlobalState>(context);
+		return std::move(global_data);
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Init Local
+	//------------------------------------------------------------------------------------------------------------------
+
+	struct LocalState : public LocalFunctionData {
+		explicit LocalState(ClientContext &context) {
+		}
+	};
+
+	static unique_ptr<LocalFunctionData> InitLocal(ExecutionContext &context, FunctionData &fdata) {
+		auto local_data = make_uniq<LocalState>(context.client);
+		return std::move(local_data);
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Sink
+	//------------------------------------------------------------------------------------------------------------------
+
+	static void Sink(ExecutionContext &context, FunctionData &fdata, GlobalFunctionData &gstate,
+	                 LocalFunctionData &lstate, DataChunk &input) {
+
+		auto &bind_data = fdata.Cast<BindData>();
+
+		pdal::PointLayoutPtr layout = bind_data.view->layout();
+		pdal::PointView *view = bind_data.view.get();
+
+		std::vector<idx_t> &field_indexes = bind_data.field_indexes;
+		pdal::PointId record_start = view->size();
+
+		// Write the points into the output
+		input.Flatten();
+		for (idx_t row_idx = 0, col_idx = 0, field_idx = 0; row_idx < input.size(); row_idx++) {
+			field_idx = 0;
+
+			for (const auto &dimId : layout->dims()) {
+				const pdal::Dimension::Detail *detail = layout->dimDetail(dimId);
+				pdal::Dimension::Type t = detail->type();
+
+				col_idx = field_indexes[field_idx];
+				duckdb::Value value = input.GetValue(col_idx, row_idx);
+
+				switch (t) {
+				case pdal::Dimension::Type::Float:
+					view->setField<float>(dimId, record_start + row_idx, value.GetValue<float>());
+					break;
+				case pdal::Dimension::Type::Double:
+					view->setField<double>(dimId, record_start + row_idx, value.GetValue<double>());
+					break;
+				case pdal::Dimension::Type::Signed8:
+					view->setField<int8_t>(dimId, record_start + row_idx, value.GetValue<int8_t>());
+					break;
+				case pdal::Dimension::Type::Signed16:
+					view->setField<int16_t>(dimId, record_start + row_idx, value.GetValue<int16_t>());
+					break;
+				case pdal::Dimension::Type::Signed32:
+					view->setField<int32_t>(dimId, record_start + row_idx, value.GetValue<int32_t>());
+					break;
+				case pdal::Dimension::Type::Signed64:
+					view->setField<int64_t>(dimId, record_start + row_idx, value.GetValue<int64_t>());
+					break;
+				case pdal::Dimension::Type::Unsigned8:
+					view->setField<uint8_t>(dimId, record_start + row_idx, value.GetValue<uint8_t>());
+					break;
+				case pdal::Dimension::Type::Unsigned16:
+					view->setField<uint16_t>(dimId, record_start + row_idx, value.GetValue<uint16_t>());
+					break;
+				case pdal::Dimension::Type::Unsigned32:
+					view->setField<uint32_t>(dimId, record_start + row_idx, value.GetValue<uint32_t>());
+					break;
+				case pdal::Dimension::Type::Unsigned64:
+					view->setField<uint64_t>(dimId, record_start + row_idx, value.GetValue<uint64_t>());
+					break;
+				default:
+					throw InvalidInputException("Unsupported PDAL dimension type in write: %d.", static_cast<int>(t));
+				}
+				field_idx++;
+			}
+		}
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Combine
+	//------------------------------------------------------------------------------------------------------------------
+
+	static void Combine(ExecutionContext &context, FunctionData &fdata, GlobalFunctionData &gstate,
+	                    LocalFunctionData &lstate) {
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Finalize
+	//------------------------------------------------------------------------------------------------------------------
+
+	static void Finalize(ClientContext &context, FunctionData &fdata, GlobalFunctionData &gstate) {
+		auto &bind_data = fdata.Cast<BindData>();
+
+		// Flush writer
+		pdal::PointTable *table = bind_data.table.get();
+		pdal::Stage *writer = bind_data.writer;
+		writer->execute(*table);
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------------------------------------------
+
+	static void Register(ExtensionLoader &loader) {
+		// register the copy function
+		CopyFunction info("PDAL");
+		info.copy_to_bind = Bind;
+		info.copy_to_initialize_local = InitLocal;
+		info.copy_to_initialize_global = InitGlobal;
+		info.copy_to_sink = Sink;
+		info.copy_to_combine = Combine;
+		info.copy_to_finalize = Finalize;
+		info.extension = "pdal";
+
+		loader.RegisterFunction(info);
+	}
+};
+
 } // namespace
 
 // ######################################################################################################################
@@ -1068,6 +1382,7 @@ void PdalTableFunctions::Register(ExtensionLoader &loader) {
 	PDAL_Info::Register(loader);
 	PDAL_Read::Register(loader);
 	PDAL_Pipeline::Register(loader);
+	PDAL_Write::Register(loader);
 }
 
 } // namespace duckdb

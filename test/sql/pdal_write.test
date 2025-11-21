@@ -1,0 +1,36 @@
+# name: test/sql/pdal_write.test
+# description: test pdal extension
+# group: [sql]
+
+require pdal
+
+statement error
+COPY (
+	SELECT * FROM './test/data/autzen_trim.laz'
+)
+TO
+	'__TEST_DIR__/autzen_new.copc.laz'
+WITH (
+	FORMAT PDAL, DRIVER 'COPC', CREATION_OPTIONS ('COMPRESSION=true')
+);
+----
+Invalid Error: writers.copc: Unexpected argument 'compression'.
+
+statement ok
+COPY (
+	SELECT * FROM './test/data/autzen_trim.laz'
+)
+TO
+	'__TEST_DIR__/autzen_new.laz'
+WITH (
+	FORMAT PDAL, DRIVER 'LAS', CREATION_OPTIONS ('COMPRESSION=true', 'MINOR_VERSION=4', 'DATAFORMAT_ID=7', 'OFFSET_X=0.0', 'OFFSET_Y=0.0', 'OFFSET_Z=0.0', 'SCALE_X=auto', 'SCALE_Y=auto', 'SCALE_Z=auto')
+);
+
+query I
+SELECT
+	COUNT(*)
+FROM
+	PDAL_Read('__TEST_DIR__/autzen_new.laz')
+;
+----
+110000

@@ -199,6 +199,38 @@ First, make sure to load the extension in your DuckDB session.
     }
     ```
 
++ ### PDAL_Write
+
+    This extension injects in the `COPY TO` statement the `PDAL` format. It allows to export data from DuckDB to an external point cloud file, in any of supported PDAL writers: https://pdal.io/en/stable/stages/writers.html
+
+    You can define creation options to customize the output, each driver type defines its own options, read them in its specific guide.
+
+    ```sql
+    COPY (
+    	SELECT * AS aa FROM './test/data/autzen_trim.laz'
+    )
+    TO
+	    './test/data/autzen_new.laz'
+    WITH (
+        FORMAT PDAL,
+        DRIVER 'LAS',
+        CREATION_OPTIONS (
+            'COMPRESSION=true',
+            'MINOR_VERSION=4',
+            'DATAFORMAT_ID=7',
+            'OFFSET_X=0.0',
+            'OFFSET_Y=0.0',
+            'OFFSET_Z=0.0',
+            'SCALE_X=auto',
+            'SCALE_Y=auto',
+            'SCALE_Z=auto'
+        )
+    );
+    ```
+
+    All input attributes with types not supported by PDAL are ignored. In addition, each `writer` type supports a specific set of `dimensions`,
+    so more input attributes could be ignored in the output.
+
 ### Supported Functions and Documentation
 
 The full list of functions and their documentation is available in the [function reference](docs/functions.md)

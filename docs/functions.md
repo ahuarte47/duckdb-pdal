@@ -48,7 +48,7 @@ PDAL_Drivers ()
 
 ```sql
 
-		SELECT * FROM PDAL_Drivers();
+		SELECT name, description FROM PDAL_Drivers();
 
 		┌─────────────────────────────┬─────────────────────────────────────────────────────────────────────────────────┐
 		│            name             │                                     description                                 │
