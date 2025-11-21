@@ -1,0 +1,58 @@
+# name: test/sql/pdal_raster.test
+# description: test pdal extension
+# group: [sql]
+
+require pdal
+
+query IIIIIIIII
+SELECT
+	file_name,
+	point_count,
+	min_x,
+	min_y,
+	min_z,
+	max_x,
+	max_y,
+	max_z,
+	srs_wkt
+FROM
+	PDAL_Info('./test/data/overlay-sample.tiff')
+;
+----
+./test/data/overlay-sample.tiff	57600	545540.0	4724510.0	0.0	545630.0	4724350.0	255.0	PROJCS["ETRS89 / UTM zone 30N",GEOGCS["ETRS89",DATUM["European_Terrestrial_Reference_System_1989",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6258"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4258"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","25830"]]
+
+query I
+SELECT
+	COUNT(*)
+FROM
+	PDAL_Read('./test/data/overlay-sample.tiff')
+;
+----
+57600
+
+query IIIII
+SELECT
+	X, Y, band_1 AS Red, band_2 AS Green, band_3 AS Blue
+FROM
+	PDAL_Read('./test/data/overlay-sample.tiff')
+LIMIT 3
+;
+----
+545540.0	4724510.0	60	44	18
+545540.5	4724510.0	60	44	18
+545541.0	4724510.0	8	3	0
+
+query II
+WITH __input AS (
+	SELECT
+		X, Y, RasterValue
+	FROM
+		PDAL_Pipeline('./test/data/overlay-sample.tiff', './test/data/overlay-sample-pipeline.json')
+)
+SELECT
+	COUNT(*) AS c, SUM(RasterValue) AS s
+FROM
+	__input
+;
+----
+57600	576000

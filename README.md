@@ -141,6 +141,26 @@ First, make sure to load the extension in your DuckDB session.
     └────────────────────────────────────────────────────────────┘
     ```
 
+    PDAL supports to load raster files, then:
+
+    ```sql
+    SELECT
+        X, Y, band_1 AS Red, band_2 AS Green, band_3 AS Blue
+    FROM
+        PDAL_Read('./test/data/overlay-sample.tiff')
+    LIMIT 3
+    ;
+
+    ┌──────────┬───────────┬───────┬───────┬───────┐
+    │    X     │     Y     │  Red  │ Green │ Blue  │
+    │  double  │  double   │ uint8 │ uint8 │ uint8 │
+    ├──────────┼───────────┼───────┼───────┼───────┤
+    │ 545540.0 │ 4724510.0 │    60 │    44 │    18 │
+    │ 545540.5 │ 4724510.0 │    60 │    44 │    18 │
+    │ 545541.0 │ 4724510.0 │     8 │     3 │     0 │
+    └──────────┴───────────┴───────┴───────┴───────┘
+    ```
+
 + ### PDAL_Info
 
     To get information about the point cloud file without reading all the data, you can use the `PDAL_Info` function.
@@ -194,6 +214,52 @@ First, make sure to load the extension in your DuckDB session.
             {
                 "type": "filters.tail",
                 "count": 100
+            }
+        ]
+    }
+    ```
+
+    PDAL is amazing, We can define PDAL pipelines with spatial logic, for example, with `filters.overlay` to extract attributes from a Geopackage:
+
+    ```sql
+    WITH __input AS (
+    	SELECT
+            X, Y, RasterValue
+        FROM
+            PDAL_Pipeline('./test/data/overlay-sample.tiff', './test/data/overlay-sample-pipeline.json')
+    )
+    SELECT
+        COUNT(*) AS c,
+        SUM(RasterValue) AS s
+    FROM
+        __input
+    ;
+
+    ┌───────┬──────────┐
+    │   c   │    s     │
+    │ int64 │  double  │
+    ├───────┼──────────┤
+    │ 57600 │ 576000.0 │
+    └───────┴──────────┘
+    ```
+
+    Where the pipeline is:
+
+    ```json
+    {
+        "pipeline": [
+            {
+                "type": "filters.assign",
+                "value" : [
+                    "RasterValue = 0.0"
+                ]
+            },
+            {
+                "type": "filters.overlay",
+                "datasource": "./test/data/overlay-sample.gpkg",
+                "layer": "area",
+                "column": "user_data",
+                "dimension": "RasterValue"
             }
         ]
     }

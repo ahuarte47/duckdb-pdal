@@ -1,0 +1,15 @@
+{
+    "pipeline": [
+        {
+            "type": "filters.assign",
+            "value" : [ "RasterValue = 0.0" ]
+        },
+        {
+            "type": "filters.overlay",
+            "datasource": "./test/data/overlay-sample.gpkg",
+            "layer": "area",
+            "column": "user_data",
+            "dimension": "RasterValue"
+        }
+    ]
+}
