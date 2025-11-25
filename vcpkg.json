@@ -5,10 +5,17 @@
         "geos",
         "expat",
         {
+            "name": "proj",
+            "default-features": false,
+            "features": [
+                "net"
+            ]
+        },
+        {
             "name": "gdal",
             "default-features": false,
             "features": [
-                "arrow","curl","expat","geos","gif","hdf5","jpeg","lzma","openjpeg","openssl","parquet","png","sqlite3","zstd"
+                "arrow","curl","expat","geos","hdf5","jpeg","lzma","openjpeg","openssl","parquet","sqlite3","zstd"
             ]
         },
         {
@@ -21,7 +28,8 @@
     ],
     "vcpkg-configuration": {
         "overlay-ports": [
-            "./extension-ci-tools/vcpkg_ports"
+            "./extension-ci-tools/vcpkg_ports",
+            "./vcpkg_ports"
         ],
         "overlay-triplets": [
             "./extension-ci-tools/toolchains"

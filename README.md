@@ -6,7 +6,7 @@
 
 This is an extension for DuckDB for manipulating point cloud data using SQL.
 
-The extension is built on top of [PDAL (Point Data Abstraction Library)](https://pdal.io/), a C++ library allowing users to read, write, and process point cloud data directly within DuckDB using SQL queries.
+The extension is built on top of [PDAL (Point Data Abstraction Library)](https://pdal.io/), a C++ library that enables users to read, write, and process point cloud data and, with this extension, load the data directly into DuckDB using SQL queries.
 
 ## How do I get it?
 
@@ -28,9 +28,11 @@ This extension is based on the [DuckDB extension template](https://github.com/du
 
 ## Example Usage
 
-You can use the extension to read point cloud data from various formats (e.g., LAS, LAZ, etc.) and perform spatial queries on them.
-
 First, make sure to load the extension in your DuckDB session.
+
+Then you can use the extension to read point cloud data from various formats (e.g., LAS, LAZ) and perform transformations on them.
+
+This is the list of available functions:
 
 + ### PDAL_Drivers
 
@@ -95,11 +97,7 @@ First, make sure to load the extension in your DuckDB session.
     You can read point cloud data from a file with:
 
     ```sql
-    SELECT
-        *
-    FROM
-        PDAL_Read('path/to/your/pointcloud.las')
-    ;
+    SELECT * FROM PDAL_Read('path/to/your/pointcloud.las');
 
     ┌───────────┬───────────┬────────┬───────┐
     │     X     │     Y     │   Z    │       │
@@ -163,9 +161,7 @@ First, make sure to load the extension in your DuckDB session.
 
 + ### PDAL_Info
 
-    To get information about the point cloud file without reading all the data, you can use the `PDAL_Info` function.
-
-    For example:
+    To get information about the point cloud files without reading all the data, use the `PDAL_Info` function:
 
     ```sql
     SELECT
@@ -187,7 +183,7 @@ First, make sure to load the extension in your DuckDB session.
 
 + ### PDAL_Pipeline
 
-    You could use the `PDAL_Pipeline` function to run a PDAL pipeline before getting the data:
+    The `PDAL_Pipeline` function runs a PDAL pipeline before getting the data:
 
     ```sql
     SELECT
@@ -219,7 +215,7 @@ First, make sure to load the extension in your DuckDB session.
     }
     ```
 
-    PDAL is amazing, We can define PDAL pipelines with spatial logic, for example, with `filters.overlay` to extract attributes from a Geopackage:
+    A more complex example, load a raster file, and using `filters.overlay`, extract attributes from a Geopackage:
 
     ```sql
     WITH __input AS (
@@ -265,11 +261,11 @@ First, make sure to load the extension in your DuckDB session.
     }
     ```
 
-+ ### PDAL_Write
++ ### COPY TO PDAL (aka PDAL_Write)
 
-    This extension injects in the `COPY TO` statement the `PDAL` format. It allows to export data from DuckDB to an external point cloud file, in any of supported PDAL writers: https://pdal.io/en/stable/stages/writers.html
+    This extension injects into the `COPY TO` statement the `PDAL` format. It allows to export data from DuckDB to an external point cloud file, in any of supported PDAL writers: https://pdal.io/en/stable/stages/writers.html
 
-    You can define creation options to customize the output, each driver type defines its own options, read them in its specific guide.
+    `CREATION_OPTIONs` allows to customize the output, each driver type defines its own options, read them in its specific guide.
 
     ```sql
     COPY (
@@ -294,7 +290,7 @@ First, make sure to load the extension in your DuckDB session.
     );
     ```
 
-    All input attributes with types not supported by PDAL are ignored. In addition, each `writer` type supports a specific set of `dimensions`,
+    All input attributes with types not supported by PDAL are ignored. In addition, each `writer` type only supports a specific set of `dimensions`,
     so more input attributes could be ignored in the output.
 
 ### Supported Functions and Documentation

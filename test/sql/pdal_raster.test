@@ -6,7 +6,7 @@ require pdal
 
 query IIIIIIIII
 SELECT
-	file_name,
+	REPLACE(file_name, '\', '/') AS file_name,
 	point_count,
 	min_x,
 	min_y,

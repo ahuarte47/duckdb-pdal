@@ -6,7 +6,7 @@ require pdal
 
 query IIIIIIIIIIIIIIIIIII
 SELECT
-	file_name,
+	REPLACE(file_name, '\', '/') AS file_name,
 	point_count,
 	min_x,
 	min_y,
@@ -36,7 +36,7 @@ ORDER BY
 
 query IIIIIIIIIII
 SELECT
-	file_name,
+	REPLACE(file_name, '\', '/') AS file_name,
 	extra_header,
 	scale_x,
 	scale_y,
