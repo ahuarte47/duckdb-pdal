@@ -1,4 +1,4 @@
-vcpkg_check_linkage(ONLY_DYNAMIC_LIBRARY)
+vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
@@ -16,6 +16,22 @@ vcpkg_from_github(
         no-rpath.patch
         rapidxml.diff
 )
+
+# Apply static build modifications
+file(READ "${SOURCE_PATH}/cmake/libraries.cmake" LIBS_CONTENT)
+string(REPLACE "set(PDAL_LIB_TYPE \"SHARED\")" "set(PDAL_LIB_TYPE \"STATIC\")" LIBS_CONTENT "${LIBS_CONTENT}")
+file(WRITE "${SOURCE_PATH}/cmake/libraries.cmake" "${LIBS_CONTENT}")
+
+# Add install targets to PDAL_ADD_FREE_LIBRARY macro
+file(READ "${SOURCE_PATH}/cmake/macros.cmake" MACROS_CONTENT)
+string(REPLACE "    endif()\nendmacro(PDAL_ADD_FREE_LIBRARY)" "    endif()\n    install(TARGETS \${_name}\n        EXPORT PDALTargets\n        RUNTIME DESTINATION \${CMAKE_INSTALL_BINDIR}\n        LIBRARY DESTINATION \${CMAKE_INSTALL_LIBDIR}\n        ARCHIVE DESTINATION \${CMAKE_INSTALL_LIBDIR})\nendmacro(PDAL_ADD_FREE_LIBRARY)" MACROS_CONTENT "${MACROS_CONTENT}")
+file(WRITE "${SOURCE_PATH}/cmake/macros.cmake" "${MACROS_CONTENT}")
+
+# Fix export to include all vendor targets for static builds
+file(READ "${SOURCE_PATH}/CMakeLists.txt" CMAKE_CONTENT)
+string(REPLACE "export(\n    TARGETS\n        \${PDAL_LIB_NAME}\n    FILE\n        \"\${PDAL_BINARY_DIR}/PDALTargets.cmake\")" "export(\n    TARGETS\n        \${PDAL_LIB_NAME}\n        \${PDAL_ARBITER_LIB_NAME}\n        \${PDAL_H3_LIB_NAME}\n        \${PDAL_KAZHDAN_LIB_NAME}\n        \${PDAL_LEPCC_LIB_NAME}\n        \${PDAL_LAZPERF_LIB_NAME}\n    FILE\n        \"\${PDAL_BINARY_DIR}/PDALTargets.cmake\")" CMAKE_CONTENT "${CMAKE_CONTENT}")
+file(WRITE "${SOURCE_PATH}/CMakeLists.txt" "${CMAKE_CONTENT}")
+
 file(REMOVE_RECURSE
     "${SOURCE_PATH}/cmake/modules/FindCurl.cmake"
     "${SOURCE_PATH}/cmake/modules/FindGeoTIFF.cmake"

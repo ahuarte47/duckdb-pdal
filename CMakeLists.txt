@@ -9,6 +9,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # DuckDB's extension distribution supports vcpkg. As such, dependencies can be added in ./vcpkg.json and then
 # used in cmake with find_package. Feel free to remove or replace with other dependencies.
 # Note that it should also be removed from vcpkg.json to prevent needlessly installing it.
+
+# Find required dependencies for PDAL static linking
+find_package(Eigen3 CONFIG REQUIRED)
+find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
+find_package(utf8cpp CONFIG REQUIRED)
+find_package(nanoflann CONFIG REQUIRED)
+find_package(LibXml2 CONFIG REQUIRED)
 find_package(GDAL CONFIG REQUIRED)
 find_package(PDAL CONFIG REQUIRED)
 
@@ -41,6 +48,16 @@ target_include_directories(${EXTENSION_NAME} PRIVATE
 target_include_directories(${LOADABLE_EXTENSION_NAME} PRIVATE
     $<BUILD_INTERFACE:$<TARGET_PROPERTY:pdalcpp,INTERFACE_INCLUDE_DIRECTORIES>>
 )
+
+# Add PDAL base directory to allow relative includes like <filters/StatsFilter.hpp>
+if(VCPKG_TOOLCHAIN)
+    target_include_directories(${EXTENSION_NAME} PRIVATE
+        ${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/include/pdal
+    )
+    target_include_directories(${LOADABLE_EXTENSION_NAME} PRIVATE
+        ${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/include/pdal
+    )
+endif()
 
 # Link PDAL in both the static library as the loadable extension
 target_link_libraries(${EXTENSION_NAME} ${PDAL_TARGET} GDAL::GDAL)

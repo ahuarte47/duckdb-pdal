@@ -7,11 +7,15 @@
 #include <duckdb/parser/parsed_data/create_scalar_function_info.hpp>
 
 // PDAL
+#include "pdal/pdal_static_registry.hpp"
 #include "pdal/pdal_table_functions.hpp"
 
 namespace duckdb {
 
 static void LoadInternal(ExtensionLoader &loader) {
+	// Register static PDAL plugins first
+	PdalStaticRegistry::Register(loader);
+
 	// Register functions
 	PdalTableFunctions::Register(loader);
 }
