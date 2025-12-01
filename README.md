@@ -1,7 +1,5 @@
 # DuckDB Point Cloud Extension
 
-🚧 WORK IN PROGRESS 🚧
-
 ## What is this?
 
 This is an extension for DuckDB for manipulating point cloud data using SQL.
@@ -10,7 +8,7 @@ The extension is built on top of [PDAL (Point Data Abstraction Library)](https:/
 
 ## How do I get it?
 
-### (TODO) Loading from community
+### Loading from community
 
 The DuckDB **Point Cloud Extension** is available as a signed [community extension](https://duckdb.org/community_extensions/list_of_extensions).
 See more details on its [DuckDB CE web page](https://duckdb.org/community_extensions/extensions/pdal.html).
