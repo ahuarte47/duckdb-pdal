@@ -958,7 +958,7 @@ struct PDAL_Pipeline {
 	                                     vector<LogicalType> &return_types, vector<string> &names) {
 
 		auto file_name = StringValue::Get(input.inputs[0]);
-		auto pipeline_file_name = StringValue::Get(input.inputs[1]);
+		auto the_pipeline = StringValue::Get(input.inputs[1]);
 
 		if (!pdal::FileUtils::fileExists(file_name)) {
 			throw InvalidInputException("File not found: %s", file_name);
@@ -969,14 +969,19 @@ struct PDAL_Pipeline {
 			throw InvalidInputException("File format not supported: %s", file_name);
 		}
 
-		// Create the PDAL Pipeline Manager and read the pipeline JSON file.
-
-		if (!pdal::FileUtils::fileExists(pipeline_file_name)) {
-			throw InvalidInputException("Pipeline file not found: %s", pipeline_file_name);
-		}
+		// Create the PDAL Pipeline Manager and read the pipeline definition (inline JSON or file).
 
 		std::unique_ptr<pdal::PipelineManager> pipeline = std::make_unique<pdal::PipelineManager>();
-		pipeline->readPipeline(pipeline_file_name);
+
+		if (StringUtil::StartsWith(the_pipeline, "[") && StringUtil::EndsWith(the_pipeline, "]")) {
+			std::stringstream ssin(the_pipeline);
+			pipeline->readPipeline(ssin);
+		} else {
+			if (!pdal::FileUtils::fileExists(the_pipeline)) {
+				throw InvalidInputException("Pipeline file not found: %s", the_pipeline);
+			}
+			pipeline->readPipeline(the_pipeline);
+		}
 
 		std::vector<pdal::Stage *> roots = pipeline->roots();
 		if (roots.size() > 1) {
@@ -1091,11 +1096,15 @@ struct PDAL_Pipeline {
 
 	static constexpr auto DESCRIPTION = R"(
 		Read and import a variety of point cloud data file formats using the PDAL library,
-		applying also a custom processing pipeline file to the data.
+		applying also a custom processing pipeline to the data.
+
+		The pipeline can be provided either as a JSON file or as an inline JSON string. If the second parameter value
+		starts with "[" and ends with "]", it represents an inline JSON, otherwise it is a file path.
 	)";
 
 	static constexpr auto EXAMPLE = R"(
 		SELECT * FROM PDAL_Pipeline('path/to/your/filename.las', 'path/to/your/pipeline.json');
+		SELECT * FROM PDAL_Pipeline('path/to/your/filename.las', '[ {"type": "filters.tail", "count": 100} ]');
 	)";
 
 	//------------------------------------------------------------------------------------------------------------------

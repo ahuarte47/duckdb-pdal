@@ -102,7 +102,10 @@ PDAL_Pipeline (file_name VARCHAR, pipeline_file_name VARCHAR, options MAP(VARCHA
 
 
 Read and import a variety of point cloud data file formats using the PDAL library,
-applying also a custom processing pipeline file to the data.
+applying also a custom processing pipeline to the data.
+
+The pipeline can be provided either as a JSON file or as an inline JSON string. If the second parameter
+value starts with "[" and ends with "]", it represents an inline JSON, otherwise it is a file path.
 
 
 #### Example
@@ -110,6 +113,7 @@ applying also a custom processing pipeline file to the data.
 ```sql
 
 SELECT * FROM PDAL_Pipeline('path/to/your/filename.las', 'path/to/your/pipeline.json');
+SELECT * FROM PDAL_Pipeline('path/to/your/filename.las', '[ {"type": "filters.tail", "count": 10} ]');
 
 ```
 

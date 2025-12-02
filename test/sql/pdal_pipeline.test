@@ -12,3 +12,12 @@ FROM
 ;
 ----
 100
+
+query I
+SELECT
+	COUNT(*)
+FROM
+	PDAL_pipeline('./test/data/autzen_trim.las', '[ {"type": "filters.tail", "count": 10} ]')
+;
+----
+10
