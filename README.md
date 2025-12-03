@@ -179,9 +179,41 @@ This is the list of available functions:
     └──────────────────────────────────────────────────────────────────────────────────────────────────────────┘
     ```
 
+    Use the `dimensions` column to get the list of fields available in each point:
+
+    ```sql
+    SELECT
+    	UNNEST(dimensions).name AS name,
+	    UNNEST(dimensions).type AS type
+    FROM
+	    PDAL_Info('./test/data/autzen_trim.laz')
+    ;
+
+    ┌───────────────────┬──────────┐
+    │       name        │   type   │
+    │      varchar      │ varchar  │
+    ├───────────────────┼──────────┤
+    │ X                 │ double   │
+    │ Y                 │ double   │
+    │ Z                 │ double   │
+    │ Intensity         │ uint16_t │
+    │ ReturnNumber      │ uint8_t  │
+    │ NumberOfReturns   │ uint8_t  │
+    │ ScanDirectionFlag │ uint8_t  │
+    │ EdgeOfFlightLine  │ uint8_t  │
+    │ Classification    │ uint8_t  │
+    │ . . .             │ . . .    │
+    │ Red               │ uint16_t │
+    │ Green             │ uint16_t │
+    │ Blue              │ uint16_t │
+    ├───────────────────┴──────────┤
+    │ 20 rows            2 columns │
+    └──────────────────────────────┘
+    ```
+
 + ### PDAL_Pipeline
 
-    The `PDAL_Pipeline` function runs a PDAL pipeline before getting the data:
+    The `PDAL_Pipeline` function runs a PDAL pipeline before getting the data, using a JSON file as parameter:
 
     ```sql
     SELECT
@@ -198,7 +230,31 @@ This is the list of available functions:
     └──────────────┘
     ```
 
-    The pipeline file can contain any valid PDAL pipeline definition. See the [PDAL documentation](https://pdal.io/en/stable/pipeline.html) for more details.
+    The pipeline can be provided either as a JSON file or as an inline JSON string. If the second parameter value
+    starts with "[" and ends with "]", it represents an inline JSON, otherwise it is a file path:
+
+    ```sql
+    SELECT
+        COUNT(*)
+    FROM
+        PDAL_pipeline('./test/data/autzen_trim.las',
+            '[
+                {
+                    "type": "filters.tail",
+                    "count": 10
+                }
+            ]'
+        )
+    ;
+    ┌──────────────┐
+    │ count_star() │
+    │    int64     │
+    ├──────────────┤
+    │     10       │
+    └──────────────┘
+    ```
+
+    The pipeline can contain any valid PDAL pipeline definition. See the [PDAL documentation](https://pdal.io/en/stable/pipeline.html) for more details.
 
     For example, the following pipeline returns only the last 100 points:
 
@@ -258,6 +314,8 @@ This is the list of available functions:
         ]
     }
     ```
+
+    If you want to write your own pipeline, you can use the `PDAL_Drivers` function to get the list of supported readers, filters and writers.
 
 + ### COPY TO PDAL (aka PDAL_Write)
 
