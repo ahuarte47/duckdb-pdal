@@ -372,6 +372,13 @@ struct PDAL_Drivers {
 
 struct PDAL_Info {
 
+// Define PDAL dimension type for the "dimensions" field.
+#ifndef DEBUG
+	static LogicalType PDAL_DIMENSION_TYPE() {
+		return LogicalType::STRUCT({{"name", LogicalType::VARCHAR}, {"type", LogicalType::VARCHAR}});
+	}
+#endif
+
 	//------------------------------------------------------------------------------------------------------------------
 	// Bind
 	//------------------------------------------------------------------------------------------------------------------
@@ -467,6 +474,13 @@ struct PDAL_Info {
 		names.emplace_back("number_of_points_by_return");
 		return_types.push_back(LogicalType::LIST(LogicalType::UBIGINT));
 
+		// Dimensions info
+
+#ifndef DEBUG
+		names.emplace_back("dimensions");
+		return_types.push_back(LogicalType::LIST(PDAL_DIMENSION_TYPE()));
+#endif
+
 		// Get the filename list
 		const auto mfreader = MultiFileReader::Create(input.table_function);
 		const auto mflist = mfreader->CreateFileList(context, input.inputs[0], FileGlobOptions::ALLOW_EMPTY);
@@ -520,6 +534,7 @@ struct PDAL_Info {
 
 				// Default LAS/LAZ Header fields values for the output
 
+				pdal::FixedPointTable table(5);
 				pdal::QuickInfo info = pdal::QuickInfo();
 				bool extra_header = false;
 				bool compressed = false;
@@ -556,6 +571,7 @@ struct PDAL_Info {
 					pdal::LasReader reader;
 					reader.setOptions(read_options);
 
+					reader.prepare(table);
 					info = reader.preview();
 					const pdal::LasHeader &header = reader.header();
 
@@ -601,6 +617,7 @@ struct PDAL_Info {
 					}
 					reader->setOptions(read_options);
 
+					reader->prepare(table);
 					info = reader->preview();
 
 					stage_factory.destroyStage(reader);
@@ -675,6 +692,27 @@ struct PDAL_Info {
 					FlatVector::SetNull(output.data[attr_idx], out_idx, true);
 					attr_idx++;
 				}
+
+				// Dimensions info
+
+#ifndef DEBUG
+
+				std::vector<duckdb::Value> dimensions;
+				pdal::PointLayoutPtr layout = table.layout();
+
+				for (const auto &dimId : layout->dims()) {
+					std::string name = layout->dimName(dimId);
+					const pdal::Dimension::Detail *detail = layout->dimDetail(dimId);
+					pdal::Dimension::Type t = detail->type();
+
+					child_list_t<Value> struct_entry;
+					struct_entry.emplace_back("name", Value(name));
+					struct_entry.emplace_back("type", Value(pdal::Dimension::interpretationName(t)));
+					dimensions.push_back(Value::STRUCT(struct_entry));
+				}
+				output.data[attr_idx++].SetValue(out_idx, Value::LIST(PDAL_DIMENSION_TYPE(), std::move(dimensions)));
+
+#endif
 
 			} catch (...) {
 				// Just skip anything we cant open

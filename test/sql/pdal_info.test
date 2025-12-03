@@ -52,3 +52,32 @@ FROM
 ;
 ----
 ./test/data/autzen-utm.bpf	false	0.01	0.01	0.01	0.0	0.0	0.0	0	0	0
+
+query II
+SELECT
+	UNNEST(dimensions).name AS name,
+	UNNEST(dimensions).type AS type
+FROM
+	PDAL_Info('./test/data/autzen_trim.laz')
+;
+----
+X	double
+Y	double
+Z	double
+Intensity	uint16_t
+ReturnNumber	uint8_t
+NumberOfReturns	uint8_t
+ScanDirectionFlag	uint8_t
+EdgeOfFlightLine	uint8_t
+Classification	uint8_t
+Synthetic	uint8_t
+KeyPoint	uint8_t
+Withheld	uint8_t
+Overlap	uint8_t
+ScanAngleRank	float
+UserData	uint8_t
+PointSourceId	uint16_t
+GpsTime	double
+Red	uint16_t
+Green	uint16_t
+Blue	uint16_t
