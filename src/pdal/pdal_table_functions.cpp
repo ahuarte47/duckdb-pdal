@@ -4,6 +4,7 @@
 // DuckDB
 #include "duckdb/main/database.hpp"
 #include "duckdb/main/extension/extension_loader.hpp"
+#include "duckdb/common/types.hpp"
 #include "duckdb/common/multi_file/multi_file_reader.hpp"
 #include "duckdb/parser/expression/function_expression.hpp"
 #include "duckdb/parser/parsed_data/create_copy_function_info.hpp"
@@ -370,14 +371,13 @@ struct PDAL_Drivers {
 // PDAL_Info
 //======================================================================================================================
 
-struct PDAL_Info {
-
 // Define PDAL dimension type for the "dimensions" field.
-#ifndef DEBUG
-	static LogicalType PDAL_DIMENSION_TYPE() {
-		return LogicalType::STRUCT({{"name", LogicalType::VARCHAR}, {"type", LogicalType::VARCHAR}});
-	}
-#endif
+inline LogicalType PDAL_DIMENSION_TYPE() {
+	LogicalType varchar_type = LogicalType(LogicalTypeId::VARCHAR);
+	return LogicalType::STRUCT({{"name", varchar_type}, {"type", varchar_type}});
+}
+
+struct PDAL_Info {
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Bind
@@ -476,10 +476,8 @@ struct PDAL_Info {
 
 		// Dimensions info
 
-#ifndef DEBUG
 		names.emplace_back("dimensions");
 		return_types.push_back(LogicalType::LIST(PDAL_DIMENSION_TYPE()));
-#endif
 
 		// Get the filename list
 		const auto mfreader = MultiFileReader::Create(input.table_function);
@@ -695,8 +693,6 @@ struct PDAL_Info {
 
 				// Dimensions info
 
-#ifndef DEBUG
-
 				std::vector<duckdb::Value> dimensions;
 				pdal::PointLayoutPtr layout = table.layout();
 
@@ -711,8 +707,6 @@ struct PDAL_Info {
 					dimensions.push_back(Value::STRUCT(struct_entry));
 				}
 				output.data[attr_idx++].SetValue(out_idx, Value::LIST(PDAL_DIMENSION_TYPE(), std::move(dimensions)));
-
-#endif
 
 			} catch (...) {
 				// Just skip anything we cant open
