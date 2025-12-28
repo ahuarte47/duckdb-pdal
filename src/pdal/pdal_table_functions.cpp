@@ -5,6 +5,7 @@
 #include "duckdb/main/database.hpp"
 #include "duckdb/main/extension/extension_loader.hpp"
 #include "duckdb/common/types.hpp"
+#include "duckdb/common/file_system.hpp"
 #include "duckdb/common/multi_file/multi_file_reader.hpp"
 #include "duckdb/parser/expression/function_expression.hpp"
 #include "duckdb/parser/parsed_data/create_copy_function_info.hpp"
@@ -524,7 +525,7 @@ struct PDAL_Info {
 
 		for (idx_t out_idx = 0; out_idx < output_size; out_idx++, state.current_idx++) {
 			auto file = bind_data.files[state.current_idx];
-			auto lower_path = StringUtil::Lower(file.path);
+			auto file_ext = StringUtil::Lower(StringUtil::GetFileExtension(file.path));
 
 			try {
 				pdal::Options read_options;
@@ -564,7 +565,7 @@ struct PDAL_Info {
 
 				// Get the header data from the file
 
-				if (StringUtil::EndsWith(lower_path, ".las") || StringUtil::EndsWith(lower_path, ".laz")) {
+				if (file_ext == "las" || file_ext == "laz") {
 
 					pdal::LasReader reader;
 					reader.setOptions(read_options);
@@ -768,7 +769,6 @@ struct PDAL_Read {
 
 	struct BindData final : TableFunctionData {
 		string file_name;
-		std::unique_ptr<pdal::StageFactory> stage_factory;
 		std::unique_ptr<pdal::PointTable> table;
 		pdal::PointViewSet views;
 		uint64_t point_count = 0;
@@ -778,8 +778,9 @@ struct PDAL_Read {
 	                                     vector<LogicalType> &return_types, vector<string> &names) {
 
 		auto file_name = StringValue::Get(input.inputs[0]);
+		auto &fs = FileSystem::GetFileSystem(context);
 
-		if (!pdal::FileUtils::fileExists(file_name)) {
+		if (!fs.IsRemoteFile(file_name) && !pdal::FileUtils::fileExists(file_name)) {
 			throw InvalidInputException("File not found: %s", file_name);
 		}
 
@@ -790,9 +791,9 @@ struct PDAL_Read {
 
 		// Create the PDAL reader based on file extension and set reader options.
 
-		std::unique_ptr<pdal::StageFactory> stage_factory = std::make_unique<pdal::StageFactory>();
+		pdal::StageFactory stage_factory;
+		pdal::Stage *reader = stage_factory.createStage(driver);
 
-		pdal::Stage *reader = stage_factory->createStage(driver);
 		if (!reader) {
 			throw InvalidInputException("Driver not found for file: %s", file_name);
 		}
@@ -825,7 +826,6 @@ struct PDAL_Read {
 
 		auto result = make_uniq<BindData>();
 		result->file_name = file_name;
-		result->stage_factory = std::move(stage_factory);
 		result->table = std::move(table);
 		result->views = std::move(views);
 		result->point_count = point_count;
@@ -903,10 +903,10 @@ struct PDAL_Read {
 	static unique_ptr<TableRef> ReplacementScan(ClientContext &, ReplacementScanInput &input,
 	                                            optional_ptr<ReplacementScanData>) {
 		auto &table_name = input.table_name;
-		auto lower_name = StringUtil::Lower(table_name);
+		auto file_ext = StringUtil::Lower(StringUtil::GetFileExtension(table_name));
 
-		// Check if the file name ends with some common LiDAR file extensions
-		if (StringUtil::EndsWith(lower_name, ".las") || StringUtil::EndsWith(lower_name, ".laz")) {
+		// Check if the file extension is a common LiDAR file extension
+		if (file_ext == "las" || file_ext == "laz") {
 
 			auto table_function = make_uniq<TableFunctionRef>();
 			vector<unique_ptr<ParsedExpression>> children;
@@ -991,8 +991,9 @@ struct PDAL_Pipeline {
 
 		auto file_name = StringValue::Get(input.inputs[0]);
 		auto the_pipeline = StringValue::Get(input.inputs[1]);
+		auto &fs = FileSystem::GetFileSystem(context);
 
-		if (!pdal::FileUtils::fileExists(file_name)) {
+		if (!fs.IsRemoteFile(file_name) && !pdal::FileUtils::fileExists(file_name)) {
 			throw InvalidInputException("File not found: %s", file_name);
 		}
 

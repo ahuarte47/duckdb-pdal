@@ -157,6 +157,24 @@ This is the list of available functions:
     └──────────┴───────────┴───────┴───────┴───────┘
     ```
 
+    PDAL supports to read remote files (eg. HTTP/HTTPS, AWS S3), so you can read point cloud data from a remote location:
+
+    ```sql
+    SELECT
+        COUNT(*) AS point_count
+    FROM
+        PDAL_Read('s3://my-bucket/autzen_trim.laz')
+    ;
+    ┌─────────────┐
+    │ point_count │
+    │    int64    │
+    ├─────────────┤
+    │    110000   │
+    └─────────────┘
+    ```
+
+    Set first the necessary credentials for accessing the remote storage.
+
 + ### PDAL_Info
 
     To get information about the point cloud files without reading all the data, use the `PDAL_Info` function:
