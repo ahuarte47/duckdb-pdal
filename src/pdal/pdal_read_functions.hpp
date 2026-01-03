@@ -4,7 +4,7 @@ namespace duckdb {
 
 class ExtensionLoader;
 
-struct PdalTableFunctions {
+struct PdalReadFunctions {
 public:
 	static void Register(ExtensionLoader &loader);
 };

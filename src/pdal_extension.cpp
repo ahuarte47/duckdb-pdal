@@ -8,7 +8,10 @@
 
 // PDAL
 #include "pdal/pdal_static_registry.hpp"
-#include "pdal/pdal_table_functions.hpp"
+#include "pdal/pdal_drivers.hpp"
+#include "pdal/pdal_read_functions.hpp"
+#include "pdal/pdal_pipeline_functions.hpp"
+#include "pdal/pdal_write_functions.hpp"
 
 namespace duckdb {
 
@@ -17,7 +20,10 @@ static void LoadInternal(ExtensionLoader &loader) {
 	PdalStaticRegistry::Register(loader);
 
 	// Register functions
-	PdalTableFunctions::Register(loader);
+	PdalDrivers::Register(loader);
+	PdalReadFunctions::Register(loader);
+	PdalPipelineFunctions::Register(loader);
+	PdalWriteFunctions::Register(loader);
 }
 
 void PdalExtension::Load(ExtensionLoader &loader) {

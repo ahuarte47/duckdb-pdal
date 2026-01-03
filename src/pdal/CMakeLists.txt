@@ -1,4 +1,9 @@
 set(EXTENSION_SOURCES
-    ${EXTENSION_SOURCES} ${CMAKE_CURRENT_SOURCE_DIR}/pdal_table_functions.cpp
+    ${EXTENSION_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/pdal_drivers.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pdal_read_functions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pdal_pipeline_functions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pdal_write_functions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pdal_utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pdal_static_registry.cpp
     PARENT_SCOPE)
