@@ -209,6 +209,219 @@ struct PDAL_Pipeline {
 	}
 };
 
+//======================================================================================================================
+// PDAL_PipelineTable
+//======================================================================================================================
+
+struct PDAL_PipelineTable {
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Bind
+	//------------------------------------------------------------------------------------------------------------------
+
+	struct BindData : public TableFunctionData {
+
+		vector<string> field_names;
+		vector<LogicalType> field_types;
+		std::vector<idx_t> field_indexes;
+
+		std::unique_ptr<pdal::PipelineManager> pipeline;
+		std::unique_ptr<pdal::BufferReader> reader;
+		std::unique_ptr<pdal::PointTable> table;
+		std::shared_ptr<pdal::PointView> view;
+
+		BindData(vector<string> field_names, vector<LogicalType> field_types)
+		    : field_names(std::move(field_names)), field_types(std::move(field_types)) {
+		}
+	};
+
+	static unique_ptr<FunctionData> Bind(ClientContext &context, TableFunctionBindInput &input,
+	                                     vector<LogicalType> &return_types, vector<string> &names) {
+
+		auto input_table = input.inputs[0];
+		auto the_pipeline = StringValue::Get(input.inputs[1]);
+
+		// Create the PDAL Pipeline Manager and read the pipeline definition (inline JSON or file).
+
+		std::unique_ptr<pdal::PipelineManager> pipeline = std::make_unique<pdal::PipelineManager>();
+
+		if (StringUtil::StartsWith(the_pipeline, "[") && StringUtil::EndsWith(the_pipeline, "]")) {
+			std::stringstream ssin(the_pipeline);
+			pipeline->readPipeline(ssin);
+		} else {
+			if (!pdal::FileUtils::fileExists(the_pipeline)) {
+				throw InvalidInputException("Pipeline file not found: %s", the_pipeline);
+			}
+			pipeline->readPipeline(the_pipeline);
+		}
+
+		std::vector<pdal::Stage *> roots = pipeline->roots();
+		if (roots.size() != 1) {
+			throw InvalidInputException("Can't process pipelines without an unique root.");
+		}
+
+		// Create the PDAL reader and prepare the target table.
+
+		std::unique_ptr<pdal::BufferReader> reader = std::make_unique<pdal::BufferReader>();
+		if (!reader) {
+			throw InvalidInputException("Driver 'readers.buffer' was not found in PDAL installation");
+		}
+
+		std::unique_ptr<pdal::PointTable> table = std::make_unique<pdal::PointTable>();
+		std::shared_ptr<pdal::PointView> view = std::make_shared<pdal::PointView>(*table);
+
+		reader->addView(view);
+		roots[0]->setInput(*reader);
+
+		// Fill the layout by mapping SQL types to PDAL types.
+
+		pdal::PointLayoutPtr layout = table->layout();
+		auto &logger = Logger::Get(context);
+
+		std::vector<idx_t> field_indexes =
+		    PdalUtils::FillLayout(layout, input.input_table_names, input.input_table_types, logger);
+
+		pdal::PointLayoutPtr pipeline_layout = pipeline->pointTable().layout();
+		PdalUtils::CopyLayout(layout, pipeline_layout);
+
+		for (auto it = field_indexes.begin(); it != field_indexes.end(); it++) {
+			return_types.push_back(input.input_table_types[*it]);
+			names.emplace_back(input.input_table_names[*it]);
+		}
+
+		// Return bind data.
+
+		auto bind_data = make_uniq<BindData>(names, return_types);
+		bind_data->pipeline = std::move(pipeline);
+		bind_data->reader = std::move(reader);
+		bind_data->table = std::move(table);
+		bind_data->view = std::move(view);
+		bind_data->field_indexes = std::move(field_indexes);
+
+		return std::move(bind_data);
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Init Global
+	//------------------------------------------------------------------------------------------------------------------
+
+	struct GlobalState final : GlobalTableFunctionState {
+		pdal::PointId point_idx;
+		uint64_t input_point_count = 0;
+		uint64_t point_count = 0;
+		bool initialized = false;
+
+		explicit GlobalState(ClientContext &context) : point_idx(0) {
+		}
+	};
+
+	static unique_ptr<GlobalTableFunctionState> InitGlobal(ClientContext &context, TableFunctionInitInput &input) {
+		auto result = make_uniq<GlobalState>(context);
+		return std::move(result);
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Init Local
+	//------------------------------------------------------------------------------------------------------------------
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Execute Function
+	//------------------------------------------------------------------------------------------------------------------
+
+	static OperatorResultType Function(ExecutionContext &context, TableFunctionInput &data_p, DataChunk &input,
+	                                   DataChunk &output) {
+
+		auto &bind_data = data_p.bind_data->Cast<BindData>();
+		auto &gstate = data_p.global_state->Cast<GlobalState>();
+
+		pdal::PointView *view = bind_data.view.get();
+		const std::vector<idx_t> &field_indexes = bind_data.field_indexes;
+
+		// Write the points into the output
+		input.Flatten();
+		PdalUtils::FillDataChunk(view, input, field_indexes);
+
+		output.SetCardinality(0);
+		gstate.input_point_count += input.size();
+
+		return OperatorResultType::NEED_MORE_INPUT;
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Finalize
+	//------------------------------------------------------------------------------------------------------------------
+
+	static OperatorFinalizeResultType Finalize(ExecutionContext &context, TableFunctionInput &data_p,
+	                                           DataChunk &output) {
+
+		auto &bind_data = data_p.bind_data->Cast<BindData>();
+		auto &gstate = data_p.global_state->Cast<GlobalState>();
+
+		pdal::PipelineManager *pipeline = bind_data.pipeline.get();
+
+		// Execute the PDAL pipeline?
+		if (!gstate.initialized) {
+			gstate.point_count = pipeline->execute();
+			gstate.initialized = true;
+		}
+
+		// Calculate how many record we can fit in the output
+		const auto output_size = std::min<idx_t>(STANDARD_VECTOR_SIZE, gstate.point_count - gstate.point_idx);
+		const auto point_start = gstate.point_idx;
+
+		// Set the cardinality of the output
+		if (output_size == 0) {
+			output.SetCardinality(0);
+			return OperatorFinalizeResultType::FINISHED;
+		}
+		output.SetCardinality(output_size);
+
+		// Load current subset of points into the output.
+		pdal::PointViewPtr view = *(bind_data.pipeline->views().begin());
+		PdalUtils::ExtractDataChunk(view, point_start, output_size, output);
+
+		// Update the point index
+		gstate.point_idx += output_size;
+
+		return OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Documentation
+	//------------------------------------------------------------------------------------------------------------------
+
+	static constexpr auto DESCRIPTION = R"(
+		Apply a custom processing pipeline to the input table. It is supposed that the input table contains columns
+		compatible with PDAL point clouds.
+
+		The pipeline can be provided either as a JSON file or as an inline JSON string. If the second parameter value
+		starts with "[" and ends with "]", it represents an inline JSON, otherwise it is a file path.
+	)";
+
+	static constexpr auto EXAMPLE = R"(
+		SELECT * FROM PDAL_PipelineTable((SELECT * FROM PDAL_Read('path/to/your/filename.las')), 'path/to/your/pipeline.json');
+		SELECT * FROM PDAL_PipelineTable((SELECT * FROM PDAL_Read('path/to/your/filename.las')), '[ {"type": "filters.tail", "count": 100} ]');
+	)";
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Register
+	//------------------------------------------------------------------------------------------------------------------
+
+	static void Register(ExtensionLoader &loader) {
+
+		InsertionOrderPreservingMap<string> tags;
+		tags.insert("ext", "pdal");
+		tags.insert("category", "table");
+
+		TableFunction func("PDAL_PipelineTable", {LogicalType::TABLE, LogicalType::VARCHAR}, nullptr, Bind, InitGlobal);
+
+		func.in_out_function = Function;
+		func.in_out_function_final = Finalize;
+
+		RegisterFunction<TableFunction>(loader, func, CatalogType::TABLE_FUNCTION_ENTRY, DESCRIPTION, EXAMPLE, tags);
+	}
+};
+
 } // namespace
 
 // #####################################################################################################################
@@ -218,6 +431,7 @@ struct PDAL_Pipeline {
 void PdalPipelineFunctions::Register(ExtensionLoader &loader) {
 
 	PDAL_Pipeline::Register(loader);
+	PDAL_PipelineTable::Register(loader);
 }
 
 } // namespace duckdb

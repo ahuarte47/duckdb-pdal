@@ -14,6 +14,9 @@ public:
 	// Parse a DuckDB struct array of key-value pairs into a PDAL Options object.
 	static void ParseOptions(const std::vector<duckdb::Value> &input, pdal::Options &options);
 
+	// Copy schema from one PDAL PointLayout to another.
+	static void CopyLayout(const pdal::PointLayoutPtr input, const pdal::PointLayoutPtr output);
+
 	// Extract DuckDB names and types from a PDAL PointLayout.
 	static void ExtractLayout(const pdal::PointLayoutPtr layout, vector<string> &names, vector<LogicalType> &types);
 

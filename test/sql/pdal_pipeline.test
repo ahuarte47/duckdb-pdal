@@ -17,7 +17,25 @@ query I
 SELECT
 	COUNT(*)
 FROM
+	PDAL_PipelineTable((SELECT X,Y,Z FROM PDAL_Read('./test/data/autzen_trim.las')), './test/data/autzen-pipeline.json')
+;
+----
+100
+
+query I
+SELECT
+	COUNT(*)
+FROM
 	PDAL_pipeline('./test/data/autzen_trim.las', '[ {"type": "filters.tail", "count": 10} ]')
+;
+----
+10
+
+query I
+SELECT
+	COUNT(*)
+FROM
+	PDAL_PipelineTable((SELECT X,Y,Z FROM PDAL_Read('./test/data/autzen_trim.las')), '[ {"type": "filters.tail", "count": 10} ]')
 ;
 ----
 10

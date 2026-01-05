@@ -16,6 +16,18 @@ void PdalUtils::ParseOptions(const std::vector<duckdb::Value> &input, pdal::Opti
 	}
 }
 
+// Copy schema from one PDAL PointLayout to another.
+void PdalUtils::CopyLayout(const pdal::PointLayoutPtr input, const pdal::PointLayoutPtr output) {
+
+	for (const auto &dimId : input->dims()) {
+		std::string name = input->dimName(dimId);
+		const pdal::Dimension::Detail *detail = input->dimDetail(dimId);
+		pdal::Dimension::Type t = detail->type();
+
+		output->registerOrAssignDim(name, t);
+	}
+}
+
 // Extract DuckDB names and types from a PDAL PointLayout.
 void PdalUtils::ExtractLayout(const pdal::PointLayoutPtr layout, vector<string> &names, vector<LogicalType> &types) {
 

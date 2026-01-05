@@ -335,6 +335,38 @@ This is the list of available functions:
 
     If you want to write your own pipeline, you can use the `PDAL_Drivers` function to get the list of supported readers, filters and writers.
 
++ ### PDAL_PipelineTable
+
+    The `PDAL_PipelineTable` function runs a PDAL pipeline on an input table. It is supposed that the input table
+    contains columns compatible with PDAL point clouds.
+
+    The pipeline can be provided either as a JSON file or as an inline JSON string. If the second parameter value
+    starts with "[" and ends with "]", it represents an inline JSON, otherwise it is a file path:
+
+    ```sql
+    SELECT
+    	COUNT(*)
+    FROM
+	    PDAL_PipelineTable(
+            (
+                SELECT X,Y,Z FROM PDAL_Read('./test/data/autzen_trim.las')
+            ),
+            '[
+                {
+                    "type": "filters.tail",
+                    "count": 10
+                }
+            ]'
+        )
+    ;
+    ┌──────────────┐
+    │ count_star() │
+    │    int64     │
+    ├──────────────┤
+    │     10       │
+    └──────────────┘
+    ```
+
 + ### COPY TO PDAL (aka PDAL_Write)
 
     This extension injects into the `COPY TO` statement the `PDAL` format. It allows to export data from DuckDB to an external point cloud file, in any of supported PDAL writers: https://pdal.io/en/stable/stages/writers.html
