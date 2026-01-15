@@ -1,6 +1,12 @@
 Release history
 ---------------
 
+0.3.0
+++++++++++++++++++
+
+- New `PDAL_PipelineTable` function to run a PDAL pipeline on an input table.
+- Enable support of PDAL to load remote files.
+
 0.2.0
 ++++++++++++++++++
 
