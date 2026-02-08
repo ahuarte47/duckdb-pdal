@@ -26,7 +26,7 @@ public:
 
 	// Extract a chunk of points from a PDAL PointView into a DuckDB DataChunk.
 	static void ExtractDataChunk(const pdal::PointViewPtr view, idx_t point_start, std::size_t point_count,
-	                             DataChunk &output);
+	                             const std::vector<column_t> &column_ids, DataChunk &output);
 
 	// Fill a PDAL PointView from a DuckDB DataChunk.
 	static void FillDataChunk(pdal::PointView *view, const DataChunk &input, const std::vector<idx_t> &field_indexes);

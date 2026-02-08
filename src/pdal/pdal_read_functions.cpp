@@ -493,13 +493,19 @@ struct PDAL_Read {
 	//------------------------------------------------------------------------------------------------------------------
 
 	struct GlobalState final : GlobalTableFunctionState {
+		std::vector<column_t> column_ids;
 		pdal::PointId point_idx;
-		explicit GlobalState(ClientContext &context) : point_idx(0) {
+		explicit GlobalState(ClientContext &context, const std::vector<column_t> &column_ids)
+		    : column_ids(std::move(column_ids)), point_idx(0) {
 		}
 	};
 
 	static unique_ptr<GlobalTableFunctionState> InitGlobal(ClientContext &context, TableFunctionInitInput &input) {
-		auto result = make_uniq<GlobalState>(context);
+
+		std::vector<column_t> column_ids;
+		std::copy(input.column_ids.begin(), input.column_ids.end(), std::back_inserter(column_ids));
+
+		auto result = make_uniq<GlobalState>(context, column_ids);
 		return std::move(result);
 	}
 
@@ -526,7 +532,7 @@ struct PDAL_Read {
 
 		// Load current subset of points into the output.
 		pdal::PointViewPtr view = *(bind_data.views.begin());
-		PdalUtils::ExtractDataChunk(view, point_start, output_size, output);
+		PdalUtils::ExtractDataChunk(view, point_start, output_size, gstate.column_ids, output);
 
 		// Update the point index
 		gstate.point_idx += output_size;
@@ -615,6 +621,10 @@ struct PDAL_Read {
 
 		func.cardinality = Cardinality;
 		func.named_parameters["options"] = LogicalType::MAP(LogicalType::VARCHAR, LogicalType::VARCHAR);
+
+		// Enable projection pushdown - allows DuckDB to tell us which columns are needed
+		// The column_ids will be passed to InitGlobal via TableFunctionInitInput
+		func.projection_pushdown = true;
 
 		RegisterFunction<TableFunction>(loader, func, CatalogType::TABLE_FUNCTION_ENTRY, DESCRIPTION, EXAMPLE, tags);
 

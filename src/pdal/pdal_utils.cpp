@@ -146,17 +146,21 @@ std::vector<idx_t> PdalUtils::FillLayout(pdal::PointLayoutPtr layout, const vect
 
 // Extract a chunk of points from a PDAL PointView into a DuckDB DataChunk.
 void PdalUtils::ExtractDataChunk(const pdal::PointViewPtr view, idx_t point_start, std::size_t point_count,
-                                 DataChunk &output) {
+                                 const std::vector<column_t> &column_ids, DataChunk &output) {
 
 	pdal::PointLayoutPtr layout = view->layout();
 	pdal::PointRef point(*view, point_start);
 
+	const pdal::Dimension::IdList &dims = layout->dims();
+
 	for (idx_t row_idx = 0, point_idx = point_start; row_idx < point_count; row_idx++, point_idx++) {
 
 		point.setPointId(point_idx);
-		idx_t col_idx = 0;
 
-		for (const auto &dimId : layout->dims()) {
+		for (idx_t col_idx = 0; col_idx < column_ids.size(); col_idx++) {
+			const auto &dim_index = column_ids[col_idx];
+
+			const auto &dimId = dims[dim_index];
 			const pdal::Dimension::Detail *detail = layout->dimDetail(dimId);
 			pdal::Dimension::Type t = detail->type();
 
@@ -214,7 +218,6 @@ void PdalUtils::ExtractDataChunk(const pdal::PointViewPtr view, idx_t point_star
 			default:
 				throw InvalidInputException("Field type %d not supported", t);
 			}
-			col_idx++;
 		}
 	}
 }
