@@ -1,5 +1,6 @@
 #include "pdal_read_functions.hpp"
 #include "function_builder.hpp"
+#include "filter_encoder.hpp"
 
 // DuckDB
 #include "duckdb/main/database.hpp"
@@ -10,8 +11,10 @@
 #include "duckdb/parser/expression/function_expression.hpp"
 #include "duckdb/parser/parsed_data/create_copy_function_info.hpp"
 #include "duckdb/parser/tableref/table_function_ref.hpp"
+#include "duckdb/planner/operator/logical_get.hpp"
 
 // PDAL
+#include <pdal/PipelineManager.hpp>
 #include <pdal/Stage.hpp>
 #include <pdal/StageFactory.hpp>
 #include <pdal/io/LasHeader.hpp>
@@ -424,9 +427,17 @@ struct PDAL_Read {
 
 	struct BindData final : TableFunctionData {
 		string file_name;
+		pdal::Options reader_options;
+		std::string where_clause;
+		std::vector<std::string> column_names;
+		std::vector<LogicalType> column_types;
+		uint64_t point_count = 0;
+
+		// Variables used when WHERE clause is not pushed down.
 		std::unique_ptr<pdal::PointTable> table;
 		pdal::PointViewSet views;
-		uint64_t point_count = 0;
+		// Variables used when WHERE clause is pushed down.
+		std::unique_ptr<pdal::PipelineManager> pipeline;
 	};
 
 	static unique_ptr<FunctionData> Bind(ClientContext &context, TableFunctionBindInput &input,
@@ -472,17 +483,16 @@ struct PDAL_Read {
 		pdal::PointLayoutPtr layout = table->layout();
 		PdalUtils::ExtractLayout(layout, names, return_types);
 
-		// Load the point data into a PointViewSet.
-
-		pdal::PointViewSet views = reader->execute(*table);
 		pdal::point_count_t point_count = reader->preview().m_pointCount;
+		stage_factory.destroyStage(reader);
 
 		// Create and return bind data.
 
 		auto bind_data = make_uniq<BindData>();
 		bind_data->file_name = file_name;
-		bind_data->table = std::move(table);
-		bind_data->views = std::move(views);
+		bind_data->reader_options = reader_options;
+		bind_data->column_names = names;
+		bind_data->column_types = return_types;
 		bind_data->point_count = point_count;
 
 		return std::move(bind_data);
@@ -501,6 +511,53 @@ struct PDAL_Read {
 	};
 
 	static unique_ptr<GlobalTableFunctionState> InitGlobal(ClientContext &context, TableFunctionInitInput &input) {
+
+		auto &bind_data = (BindData &)*input.bind_data;
+
+		const auto &file_name = bind_data.file_name;
+		const auto &reader_options = bind_data.reader_options;
+
+		std::string driver = pdal::StageFactory::inferReaderDriver(file_name);
+		if (driver.length() == 0) {
+			throw InvalidInputException("File format not supported: %s", file_name);
+		}
+
+		// Depending on whether or not there is a where clause that can be pushed down...
+		if (bind_data.where_clause.empty()) {
+
+			// Just read the whole file and keep it in memory for execution.
+			pdal::StageFactory stage_factory;
+			pdal::Stage *reader = stage_factory.createStage(driver);
+
+			reader->setOptions(reader_options);
+			std::unique_ptr<pdal::PointTable> table = std::make_unique<pdal::PointTable>();
+			reader->prepare(*table);
+
+			pdal::PointViewSet views = reader->execute(*table);
+			bind_data.table = std::move(table);
+			bind_data.views = std::move(views);
+		} else {
+			// Encode the where clause into a PDAL pipeline and push down the filter to PDAL.
+
+			std::string the_pipeline = StringUtil::Format(
+			    "[ {\"type\": \"filters.expression\", \"expression\": \"(%s)\"} ]", bind_data.where_clause);
+
+			std::unique_ptr<pdal::PipelineManager> pipeline = std::make_unique<pdal::PipelineManager>();
+			std::stringstream ssin(the_pipeline);
+			pipeline->readPipeline(ssin);
+
+			std::vector<pdal::Stage *> roots = pipeline->roots();
+			if (roots.size() != 1) {
+				throw InvalidInputException("Can't process pipelines without an unique root.");
+			}
+
+			pdal::Stage *reader = &pipeline->makeReader(file_name, driver, reader_options);
+			roots[0]->setInput(*reader);
+			pdal::point_count_t point_count = pipeline->execute();
+
+			bind_data.pipeline = std::move(pipeline);
+			bind_data.point_count = point_count;
+		}
 
 		std::vector<column_t> column_ids;
 		std::copy(input.column_ids.begin(), input.column_ids.end(), std::back_inserter(column_ids));
@@ -531,8 +588,13 @@ struct PDAL_Read {
 		}
 
 		// Load current subset of points into the output.
-		pdal::PointViewPtr view = *(bind_data.views.begin());
-		PdalUtils::ExtractDataChunk(view, point_start, output_size, gstate.column_ids, output);
+		if (bind_data.where_clause.empty()) {
+			pdal::PointViewPtr view = *(bind_data.views.begin());
+			PdalUtils::ExtractDataChunk(view, point_start, output_size, gstate.column_ids, output);
+		} else {
+			pdal::PointViewPtr view = *(bind_data.pipeline->views().begin());
+			PdalUtils::ExtractDataChunk(view, point_start, output_size, gstate.column_ids, output);
+		}
 
 		// Update the point index
 		gstate.point_idx += output_size;
@@ -540,6 +602,36 @@ struct PDAL_Read {
 		// Set the cardinality of the output
 		output.SetCardinality(output_size);
 	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Complex Filter Pushdown
+	//------------------------------------------------------------------------------------------------------------------
+
+	static void PushdownComplexFilter(ClientContext &context, LogicalGet &get, FunctionData *bind_data_p,
+	                                  vector<unique_ptr<Expression>> &expressions) {
+
+		auto &bind_data = bind_data_p->Cast<BindData>();
+
+		// Get column_ids from LogicalGet to map expression column indices to table columns.
+
+		const auto &get_column_ids = get.GetColumnIds();
+
+		std::vector<column_t> column_ids;
+		for (const auto &col_idx : get_column_ids) {
+			column_ids.push_back(col_idx.IsVirtualColumn() ? COLUMN_IDENTIFIER_ROW_ID : col_idx.GetPrimaryIndex());
+		}
+
+		// Encode the expressions into a PDAL-readable where clause.
+
+		ExpressionEncodeContext ctx(column_ids, bind_data.column_names, bind_data.column_types);
+
+		FilterEncoderResult result = FilterEncoder::EncodeExpressions(expressions, ctx);
+		if (result.supported && !result.where_clause.empty()) {
+
+			bind_data.where_clause = result.where_clause;
+			expressions.clear();
+		}
+	}
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Cardinality
@@ -625,6 +717,10 @@ struct PDAL_Read {
 		// Enable projection pushdown - allows DuckDB to tell us which columns are needed
 		// The column_ids will be passed to InitGlobal via TableFunctionInitInput
 		func.projection_pushdown = true;
+
+		// Enable complex filter pushdown - handles expressions like (A AND B) OR (C AND D)
+		// that cannot be represented as simple TableFilter objects
+		func.pushdown_complex_filter = PushdownComplexFilter;
 
 		RegisterFunction<TableFunction>(loader, func, CatalogType::TABLE_FUNCTION_ENTRY, DESCRIPTION, EXAMPLE, tags);
 

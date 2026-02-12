@@ -1,5 +1,6 @@
 set(EXTENSION_SOURCES
     ${EXTENSION_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/filter_encoder.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pdal_drivers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pdal_read_functions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pdal_pipeline_functions.cpp

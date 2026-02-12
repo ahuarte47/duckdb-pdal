@@ -175,6 +175,16 @@ This is the list of available functions:
 
     Set first the necessary credentials for accessing the remote storage.
 
+
+    **NOTE**:
+
+    Extension supports pushdown of T-SQL filters on dimensions, which are encoded and sent to the PDAL to
+    filter the data before being loaded into DuckDB.
+
+    Code injects a `filters.expression` stage with the pushed down filter expression into the PDAL pipeline.
+    In case of expressions with unsupported functions, code falls back to the default behavior of loading
+    all the data and then applying the filter in DuckDB.
+
 + ### PDAL_Info
 
     To get information about the point cloud files without reading all the data, use the `PDAL_Info` function:

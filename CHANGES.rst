@@ -1,6 +1,12 @@
 Release history
 ---------------
 
+0.4.0
+++++++++++++++++++
+
+- All functions use `projection_pushdown` to optimize query execution.
+- `PDAL_Read` function supports filter pushdown.
+
 0.3.0
 ++++++++++++++++++
 

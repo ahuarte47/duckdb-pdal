@@ -1,0 +1,20 @@
+# name: test/sql/pdal_read_where.test
+# description: test pdal extension
+# group: [sql]
+
+require pdal
+
+query IIIIII
+SELECT
+	X, Y, Z, Red, Green, Blue
+FROM
+	PDAL_Read('./test/data/autzen_trim.laz')
+WHERE
+	(Red >= 120 AND Red <= 255)
+	AND
+	((Green >= 140 AND Green <= 255) OR (Blue >= 140 AND Blue <= 255))
+	AND
+	(X = 636020.5700000001 AND Y = 849417.9500000001 AND Z = 407.25)
+;
+----
+636020.5700000001	849417.9500000001	407.25	187	176	154
