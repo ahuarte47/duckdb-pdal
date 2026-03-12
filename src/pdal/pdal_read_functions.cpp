@@ -37,7 +37,6 @@ inline LogicalType PDAL_DIMENSION_TYPE() {
 }
 
 struct PDAL_Info {
-
 	//------------------------------------------------------------------------------------------------------------------
 	// Bind
 	//------------------------------------------------------------------------------------------------------------------
@@ -50,7 +49,6 @@ struct PDAL_Info {
 
 	static unique_ptr<FunctionData> Bind(ClientContext &context, TableFunctionBindInput &input,
 	                                     vector<LogicalType> &return_types, vector<string> &names) {
-
 		names.emplace_back("file_name");
 		return_types.push_back(LogicalType::VARCHAR);
 
@@ -167,7 +165,6 @@ struct PDAL_Info {
 	//------------------------------------------------------------------------------------------------------------------
 
 	static void Execute(ClientContext &context, TableFunctionInput &input, DataChunk &output) {
-
 		auto &bind_data = input.bind_data->Cast<BindData>();
 		auto &state = input.global_state->Cast<State>();
 
@@ -224,7 +221,6 @@ struct PDAL_Info {
 				// Get the header data from the file
 
 				if (file_ext == "las" || file_ext == "laz") {
-
 					pdal::LasReader reader;
 					reader.setOptions(read_options);
 
@@ -404,7 +400,6 @@ struct PDAL_Info {
 	//------------------------------------------------------------------------------------------------------------------
 
 	static void Register(ExtensionLoader &loader) {
-
 		InsertionOrderPreservingMap<string> tags;
 		tags.insert("ext", "pdal");
 		tags.insert("category", "table");
@@ -420,7 +415,6 @@ struct PDAL_Info {
 //======================================================================================================================
 
 struct PDAL_Read {
-
 	//------------------------------------------------------------------------------------------------------------------
 	// Bind
 	//------------------------------------------------------------------------------------------------------------------
@@ -442,7 +436,6 @@ struct PDAL_Read {
 
 	static unique_ptr<FunctionData> Bind(ClientContext &context, TableFunctionBindInput &input,
 	                                     vector<LogicalType> &return_types, vector<string> &names) {
-
 		auto file_name = StringValue::Get(input.inputs[0]);
 		auto &fs = FileSystem::GetFileSystem(context);
 
@@ -511,7 +504,6 @@ struct PDAL_Read {
 	};
 
 	static unique_ptr<GlobalTableFunctionState> InitGlobal(ClientContext &context, TableFunctionInitInput &input) {
-
 		auto &bind_data = (BindData &)*input.bind_data;
 
 		const auto &file_name = bind_data.file_name;
@@ -524,7 +516,6 @@ struct PDAL_Read {
 
 		// Depending on whether or not there is a where clause that can be pushed down...
 		if (bind_data.where_clause.empty()) {
-
 			// Just read the whole file and keep it in memory for execution.
 			pdal::StageFactory stage_factory;
 			pdal::Stage *reader = stage_factory.createStage(driver);
@@ -609,7 +600,6 @@ struct PDAL_Read {
 
 	static void PushdownComplexFilter(ClientContext &context, LogicalGet &get, FunctionData *bind_data_p,
 	                                  vector<unique_ptr<Expression>> &expressions) {
-
 		auto &bind_data = bind_data_p->Cast<BindData>();
 
 		// Get column_ids from LogicalGet to map expression column indices to table columns.
@@ -627,7 +617,6 @@ struct PDAL_Read {
 
 		FilterEncoderResult result = FilterEncoder::EncodeExpressions(expressions, ctx);
 		if (result.supported && !result.where_clause.empty()) {
-
 			bind_data.where_clause = result.where_clause;
 			expressions.clear();
 		}
@@ -638,7 +627,6 @@ struct PDAL_Read {
 	//------------------------------------------------------------------------------------------------------------------
 
 	static unique_ptr<NodeStatistics> Cardinality(ClientContext &context, const FunctionData *data) {
-
 		auto &bind_data = data->Cast<BindData>();
 		auto result = make_uniq<NodeStatistics>();
 
@@ -660,7 +648,6 @@ struct PDAL_Read {
 
 		// Check if the file extension is a common LiDAR file extension
 		if (file_ext == "las" || file_ext == "laz") {
-
 			auto table_function = make_uniq<TableFunctionRef>();
 			vector<unique_ptr<ParsedExpression>> children;
 			children.push_back(make_uniq<ConstantExpression>(Value(table_name)));
@@ -704,7 +691,6 @@ struct PDAL_Read {
 	//------------------------------------------------------------------------------------------------------------------
 
 	static void Register(ExtensionLoader &loader) {
-
 		InsertionOrderPreservingMap<string> tags;
 		tags.insert("ext", "pdal");
 		tags.insert("category", "table");
@@ -738,7 +724,6 @@ struct PDAL_Read {
 // #####################################################################################################################
 
 void PdalReadFunctions::Register(ExtensionLoader &loader) {
-
 	PDAL_Info::Register(loader);
 	PDAL_Read::Register(loader);
 }

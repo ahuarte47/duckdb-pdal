@@ -4,7 +4,6 @@ namespace duckdb {
 
 // Parse a DuckDB struct array of key-value pairs into a PDAL Options object.
 void PdalUtils::ParseOptions(const std::vector<duckdb::Value> &input, pdal::Options &options) {
-
 	for (const auto &kv_child : input) {
 		auto kv_pair = StructValue::GetChildren(kv_child);
 		if (kv_pair.size() != 2) {
@@ -18,7 +17,6 @@ void PdalUtils::ParseOptions(const std::vector<duckdb::Value> &input, pdal::Opti
 
 // Copy schema from one PDAL PointLayout to another.
 void PdalUtils::CopyLayout(const pdal::PointLayoutPtr input, const pdal::PointLayoutPtr output) {
-
 	for (const auto &dimId : input->dims()) {
 		std::string name = input->dimName(dimId);
 		const pdal::Dimension::Detail *detail = input->dimDetail(dimId);
@@ -30,7 +28,6 @@ void PdalUtils::CopyLayout(const pdal::PointLayoutPtr input, const pdal::PointLa
 
 // Extract DuckDB names and types from a PDAL PointLayout.
 void PdalUtils::ExtractLayout(const pdal::PointLayoutPtr layout, vector<string> &names, vector<LogicalType> &types) {
-
 	for (const auto &dimId : layout->dims()) {
 		std::string name = layout->dimName(dimId);
 		const pdal::Dimension::Detail *detail = layout->dimDetail(dimId);
@@ -89,7 +86,6 @@ void PdalUtils::ExtractLayout(const pdal::PointLayoutPtr layout, vector<string> 
 // Fill a PDAL PointLayout from a set of DuckDB names and types.
 std::vector<idx_t> PdalUtils::FillLayout(pdal::PointLayoutPtr layout, const vector<string> &names,
                                          const vector<LogicalType> &types, Logger &logger) {
-
 	if (names.size() != types.size()) {
 		throw InvalidInputException("SQL types and names size mismatch");
 	}
@@ -135,7 +131,7 @@ std::vector<idx_t> PdalUtils::FillLayout(pdal::PointLayoutPtr layout, const vect
 			break;
 
 		default:
-			logger.WriteLog("pdal", LogLevel::LOG_WARN, "Field type '%s' not supported, skipping dimension '%s'.",
+			logger.WriteLog("pdal", LogLevel::LOG_WARNING, "Field type '%s' not supported, skipping dimension '%s'.",
 			                type.ToString().c_str(), name.c_str());
 			continue;
 		}
@@ -147,14 +143,12 @@ std::vector<idx_t> PdalUtils::FillLayout(pdal::PointLayoutPtr layout, const vect
 // Extract a chunk of points from a PDAL PointView into a DuckDB DataChunk.
 void PdalUtils::ExtractDataChunk(const pdal::PointViewPtr view, idx_t point_start, std::size_t point_count,
                                  const std::vector<column_t> &column_ids, DataChunk &output) {
-
 	pdal::PointLayoutPtr layout = view->layout();
 	pdal::PointRef point(*view, point_start);
 
 	const pdal::Dimension::IdList &dims = layout->dims();
 
 	for (idx_t row_idx = 0, point_idx = point_start; row_idx < point_count; row_idx++, point_idx++) {
-
 		point.setPointId(point_idx);
 
 		for (idx_t col_idx = 0; col_idx < column_ids.size(); col_idx++) {
@@ -224,7 +218,6 @@ void PdalUtils::ExtractDataChunk(const pdal::PointViewPtr view, idx_t point_star
 
 // Fill a PDAL PointView from a DuckDB DataChunk.
 void PdalUtils::FillDataChunk(pdal::PointView *view, const DataChunk &input, const std::vector<idx_t> &field_indexes) {
-
 	pdal::PointLayoutPtr layout = view->layout();
 	pdal::PointId point_start = view->size();
 

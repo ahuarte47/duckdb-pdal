@@ -96,7 +96,6 @@ namespace duckdb {
 // ######################################################################################################################
 
 void PdalStaticRegistry::Register(ExtensionLoader &loader) {
-
 	// Create & delete dummy instances to force linkage (once)
 	static std::once_flag loaded;
 	std::call_once(loaded, [&]() {

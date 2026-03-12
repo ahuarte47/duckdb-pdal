@@ -74,7 +74,6 @@ std::string FilterEncoder::ValueToSQLLiteral(const Value &value, const LogicalTy
 
 ExpressionEncodeResult FilterEncoder::EncodeColumnRef(const BoundColumnRefExpression &expr,
                                                       const ExpressionEncodeContext &ctx) {
-
 	// Get the column binding - this contains the table index and column index
 	const auto &binding = expr.binding;
 	const auto &column_ids = ctx.column_ids;
@@ -120,7 +119,6 @@ ExpressionEncodeResult FilterEncoder::EncodeConstant(const BoundConstantExpressi
 
 ExpressionEncodeResult FilterEncoder::EncodeComparisonExpression(const BoundComparisonExpression &expr,
                                                                  const ExpressionEncodeContext &ctx) {
-
 	// Get the comparison operator
 	std::string op;
 	if (!GetComparisonOperator(expr.type, op)) {
@@ -144,7 +142,6 @@ ExpressionEncodeResult FilterEncoder::EncodeComparisonExpression(const BoundComp
 
 ExpressionEncodeResult FilterEncoder::EncodeOperatorExpression(const BoundOperatorExpression &expr,
                                                                const ExpressionEncodeContext &ctx) {
-
 	// Handle NOT operator
 	if (expr.type == ExpressionType::OPERATOR_NOT) {
 		if (expr.children.size() != 1) {
@@ -190,7 +187,6 @@ ExpressionEncodeResult FilterEncoder::EncodeOperatorExpression(const BoundOperat
 
 ExpressionEncodeResult FilterEncoder::EncodeConjunctionExpression(const BoundConjunctionExpression &expr,
                                                                   const ExpressionEncodeContext &ctx) {
-
 	if (expr.children.empty()) {
 		return {"", false};
 	}
@@ -216,7 +212,6 @@ ExpressionEncodeResult FilterEncoder::EncodeConjunctionExpression(const BoundCon
 
 ExpressionEncodeResult FilterEncoder::EncodeBetweenExpression(const BoundBetweenExpression &expr,
                                                               const ExpressionEncodeContext &ctx) {
-
 	if (expr.input->GetExpressionClass() != ExpressionClass::BOUND_COLUMN_REF ||
 	    expr.lower->GetExpressionClass() != ExpressionClass::BOUND_CONSTANT ||
 	    expr.upper->GetExpressionClass() != ExpressionClass::BOUND_CONSTANT) {
@@ -238,9 +233,7 @@ ExpressionEncodeResult FilterEncoder::EncodeBetweenExpression(const BoundBetween
 }
 
 ExpressionEncodeResult FilterEncoder::EncodeExpression(const Expression &expr, const ExpressionEncodeContext &ctx) {
-
 	switch (expr.GetExpressionClass()) {
-
 	case ExpressionClass::BOUND_COLUMN_REF:
 		return EncodeColumnRef(expr.Cast<BoundColumnRefExpression>(), ctx);
 
@@ -267,7 +260,6 @@ ExpressionEncodeResult FilterEncoder::EncodeExpression(const Expression &expr, c
 
 FilterEncoderResult FilterEncoder::EncodeExpressions(const std::vector<unique_ptr<Expression>> &expressions,
                                                      const ExpressionEncodeContext &ctx) {
-
 	FilterEncoderResult result;
 	result.supported = true;
 
@@ -287,7 +279,6 @@ FilterEncoderResult FilterEncoder::EncodeExpressions(const std::vector<unique_pt
 			return result;
 		}
 		if (!expr_result.sql.empty()) {
-
 			// Combine with existing where clause if needed.
 			if (result.where_clause.empty()) {
 				result.where_clause = "(" + expr_result.sql + ")";

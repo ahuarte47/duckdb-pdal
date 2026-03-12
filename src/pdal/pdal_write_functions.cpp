@@ -25,13 +25,11 @@ namespace {
 //======================================================================================================================
 
 struct PDAL_Write {
-
 	//------------------------------------------------------------------------------------------------------------------
 	// Bind
 	//------------------------------------------------------------------------------------------------------------------
 
 	struct BindData : public TableFunctionData {
-
 		string file_name;
 
 		vector<string> field_names;
@@ -52,7 +50,6 @@ struct PDAL_Write {
 
 	static unique_ptr<FunctionData> Bind(ClientContext &context, CopyFunctionBindInput &input,
 	                                     const vector<string> &names, const vector<LogicalType> &types) {
-
 		std::string file_name = input.info.file_path;
 		std::string driver_name;
 
@@ -174,7 +171,6 @@ struct PDAL_Write {
 
 	static void Sink(ExecutionContext &context, FunctionData &fdata, GlobalFunctionData &gstate,
 	                 LocalFunctionData &lstate, DataChunk &input) {
-
 		auto &bind_data = fdata.Cast<BindData>();
 
 		pdal::PointView *view = bind_data.view.get();
@@ -231,7 +227,6 @@ struct PDAL_Write {
 // #####################################################################################################################
 
 void PdalWriteFunctions::Register(ExtensionLoader &loader) {
-
 	PDAL_Write::Register(loader);
 }
 

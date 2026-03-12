@@ -19,7 +19,6 @@ namespace {
 //======================================================================================================================
 
 struct PDAL_Drivers {
-
 	//------------------------------------------------------------------------------------------------------------------
 	// Bind
 	//------------------------------------------------------------------------------------------------------------------
@@ -32,7 +31,6 @@ struct PDAL_Drivers {
 
 	static unique_ptr<FunctionData> Bind(ClientContext &context, TableFunctionBindInput &input,
 	                                     vector<LogicalType> &return_types, vector<string> &names) {
-
 		names.emplace_back("name");
 		return_types.push_back(LogicalType::VARCHAR);
 		names.emplace_back("description");
@@ -134,7 +132,6 @@ struct PDAL_Drivers {
 	//------------------------------------------------------------------------------------------------------------------
 
 	static void Register(ExtensionLoader &loader) {
-
 		InsertionOrderPreservingMap<string> tags;
 		tags.insert("ext", "pdal");
 		tags.insert("category", "table");
@@ -151,7 +148,6 @@ struct PDAL_Drivers {
 // #####################################################################################################################
 
 void PdalDrivers::Register(ExtensionLoader &loader) {
-
 	PDAL_Drivers::Register(loader);
 }
 

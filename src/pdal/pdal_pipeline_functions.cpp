@@ -29,7 +29,6 @@ namespace {
 //======================================================================================================================
 
 struct PDAL_Pipeline {
-
 	//------------------------------------------------------------------------------------------------------------------
 	// Bind
 	//------------------------------------------------------------------------------------------------------------------
@@ -42,7 +41,6 @@ struct PDAL_Pipeline {
 
 	static unique_ptr<FunctionData> Bind(ClientContext &context, TableFunctionBindInput &input,
 	                                     vector<LogicalType> &return_types, vector<string> &names) {
-
 		auto file_name = StringValue::Get(input.inputs[0]);
 		auto the_pipeline = StringValue::Get(input.inputs[1]);
 		auto &fs = FileSystem::GetFileSystem(context);
@@ -120,7 +118,6 @@ struct PDAL_Pipeline {
 	};
 
 	static unique_ptr<GlobalTableFunctionState> InitGlobal(ClientContext &context, TableFunctionInitInput &input) {
-
 		std::vector<column_t> column_ids;
 		std::copy(input.column_ids.begin(), input.column_ids.end(), std::back_inserter(column_ids));
 
@@ -164,7 +161,6 @@ struct PDAL_Pipeline {
 	//------------------------------------------------------------------------------------------------------------------
 
 	static unique_ptr<NodeStatistics> Cardinality(ClientContext &context, const FunctionData *data) {
-
 		auto &bind_data = data->Cast<BindData>();
 		auto result = make_uniq<NodeStatistics>();
 
@@ -201,7 +197,6 @@ struct PDAL_Pipeline {
 	//------------------------------------------------------------------------------------------------------------------
 
 	static void Register(ExtensionLoader &loader) {
-
 		InsertionOrderPreservingMap<string> tags;
 		tags.insert("ext", "pdal");
 		tags.insert("category", "table");
@@ -224,13 +219,11 @@ struct PDAL_Pipeline {
 //======================================================================================================================
 
 struct PDAL_PipelineTable {
-
 	//------------------------------------------------------------------------------------------------------------------
 	// Bind
 	//------------------------------------------------------------------------------------------------------------------
 
 	struct BindData : public TableFunctionData {
-
 		vector<string> field_names;
 		vector<LogicalType> field_types;
 		std::vector<idx_t> field_indexes;
@@ -247,7 +240,6 @@ struct PDAL_PipelineTable {
 
 	static unique_ptr<FunctionData> Bind(ClientContext &context, TableFunctionBindInput &input,
 	                                     vector<LogicalType> &return_types, vector<string> &names) {
-
 		auto input_table = input.inputs[0];
 		auto the_pipeline = StringValue::Get(input.inputs[1]);
 
@@ -328,7 +320,6 @@ struct PDAL_PipelineTable {
 	};
 
 	static unique_ptr<GlobalTableFunctionState> InitGlobal(ClientContext &context, TableFunctionInitInput &input) {
-
 		std::vector<column_t> column_ids;
 		std::copy(input.column_ids.begin(), input.column_ids.end(), std::back_inserter(column_ids));
 
@@ -346,7 +337,6 @@ struct PDAL_PipelineTable {
 
 	static OperatorResultType Function(ExecutionContext &context, TableFunctionInput &data_p, DataChunk &input,
 	                                   DataChunk &output) {
-
 		auto &bind_data = data_p.bind_data->Cast<BindData>();
 		auto &gstate = data_p.global_state->Cast<GlobalState>();
 
@@ -369,7 +359,6 @@ struct PDAL_PipelineTable {
 
 	static OperatorFinalizeResultType Finalize(ExecutionContext &context, TableFunctionInput &data_p,
 	                                           DataChunk &output) {
-
 		auto &bind_data = data_p.bind_data->Cast<BindData>();
 		auto &gstate = data_p.global_state->Cast<GlobalState>();
 
@@ -424,7 +413,6 @@ struct PDAL_PipelineTable {
 	//------------------------------------------------------------------------------------------------------------------
 
 	static void Register(ExtensionLoader &loader) {
-
 		InsertionOrderPreservingMap<string> tags;
 		tags.insert("ext", "pdal");
 		tags.insert("category", "table");
@@ -449,7 +437,6 @@ struct PDAL_PipelineTable {
 // #####################################################################################################################
 
 void PdalPipelineFunctions::Register(ExtensionLoader &loader) {
-
 	PDAL_Pipeline::Register(loader);
 	PDAL_PipelineTable::Register(loader);
 }
