@@ -7,9 +7,13 @@
 #include "duckdb/common/types.hpp"
 #include "duckdb/common/file_system.hpp"
 #include "duckdb/common/multi_file/multi_file_reader.hpp"
+#include "duckdb/optimizer/optimizer_extension.hpp"
 #include "duckdb/parser/expression/function_expression.hpp"
 #include "duckdb/parser/parsed_data/create_copy_function_info.hpp"
 #include "duckdb/parser/tableref/table_function_ref.hpp"
+#include "duckdb/planner/operator/logical_get.hpp"
+#include "duckdb/planner/operator/logical_limit.hpp"
+#include "duckdb/planner/operator/logical_order.hpp"
 
 // PDAL
 #include <pdal/PipelineManager.hpp>
@@ -37,6 +41,7 @@ struct PDAL_Pipeline {
 		string file_name;
 		std::unique_ptr<pdal::PipelineManager> pipeline;
 		uint64_t point_count = 0;
+		uint64_t point_limit = 0;
 	};
 
 	static unique_ptr<FunctionData> Bind(ClientContext &context, TableFunctionBindInput &input,
@@ -130,6 +135,49 @@ struct PDAL_Pipeline {
 	//------------------------------------------------------------------------------------------------------------------
 
 	//------------------------------------------------------------------------------------------------------------------
+	// Optimize (Only LIMIT pushdown is implemented)
+	//------------------------------------------------------------------------------------------------------------------
+
+	static void Optimize(OptimizerExtensionInput &input, unique_ptr<LogicalOperator> &op) {
+		// Apply optimizations on the LogicalPlan
+
+		if (op->type == LogicalOperatorType::LOGICAL_LIMIT) {
+			auto &limit = op->Cast<LogicalLimit>();
+
+			// Only push down simple LIMIT without OFFSET, ORDER BY or GROUP BY, and with a constant value,
+			// as it would change the result of the query.
+			if (limit.limit_val.Type() != LimitNodeType::CONSTANT_VALUE) {
+				return;
+			}
+			if (limit.offset_val.Type() != LimitNodeType::UNSET) {
+				return;
+			}
+			for (const auto &child : op->children) {
+				if (child->type == LogicalOperatorType::LOGICAL_ORDER_BY) {
+					return;
+				}
+				if (child->type == LogicalOperatorType::LOGICAL_AGGREGATE_AND_GROUP_BY) {
+					return;
+				}
+				if (child->type == LogicalOperatorType::LOGICAL_GET) {
+					auto &get = child->Cast<LogicalGet>();
+
+					if (StringUtil::Lower(get.function.name) == "pdal_pipeline") {
+						auto &bind_data = get.bind_data->Cast<BindData>();
+						bind_data.point_limit = limit.limit_val.GetConstantValue();
+						return;
+					}
+				}
+			}
+		}
+
+		// Recurse into children
+		for (auto &child : op->children) {
+			Optimize(input, child);
+		}
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
 	// Execute
 	//------------------------------------------------------------------------------------------------------------------
 
@@ -137,8 +185,11 @@ struct PDAL_Pipeline {
 		auto &bind_data = (BindData &)*input.bind_data;
 		auto &gstate = input.global_state->Cast<GlobalState>();
 
+		const uint64_t point_count =
+		    bind_data.point_limit > 0 ? std::min(bind_data.point_limit, bind_data.point_count) : bind_data.point_count;
+
 		// Calculate how many record we can fit in the output
-		const auto output_size = std::min<idx_t>(STANDARD_VECTOR_SIZE, bind_data.point_count - gstate.point_idx);
+		const auto output_size = std::min<idx_t>(STANDARD_VECTOR_SIZE, point_count - gstate.point_idx);
 		const auto point_start = gstate.point_idx;
 
 		// Set the cardinality of the output
@@ -211,6 +262,13 @@ struct PDAL_Pipeline {
 		func.projection_pushdown = true;
 
 		RegisterFunction<TableFunction>(loader, func, CatalogType::TABLE_FUNCTION_ENTRY, DESCRIPTION, EXAMPLE, tags);
+
+		// Register optimizer extension for LIMIT pushdown
+		auto &db = loader.GetDatabaseInstance();
+		auto &config = DBConfig::GetConfig(db);
+		OptimizerExtension pdal_optimizer;
+		pdal_optimizer.optimize_function = PDAL_Pipeline::Optimize;
+		OptimizerExtension::Register(config, std::move(pdal_optimizer));
 	}
 };
 
