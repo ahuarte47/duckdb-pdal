@@ -185,11 +185,12 @@ struct PDAL_Pipeline {
 		auto &bind_data = (BindData &)*input.bind_data;
 		auto &gstate = input.global_state->Cast<GlobalState>();
 
-		const uint64_t point_count =
-		    bind_data.point_limit > 0 ? std::min(bind_data.point_limit, bind_data.point_count) : bind_data.point_count;
+		const uint64_t point_count = bind_data.point_limit > 0
+		                                 ? MinValue<uint64_t>(bind_data.point_limit, bind_data.point_count)
+		                                 : bind_data.point_count;
 
 		// Calculate how many record we can fit in the output
-		const auto output_size = std::min<idx_t>(STANDARD_VECTOR_SIZE, point_count - gstate.point_idx);
+		const auto output_size = MinValue<idx_t>(STANDARD_VECTOR_SIZE, point_count - gstate.point_idx);
 		const auto point_start = gstate.point_idx;
 
 		// Set the cardinality of the output
