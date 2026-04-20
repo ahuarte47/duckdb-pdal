@@ -3,7 +3,12 @@ cmake_minimum_required(VERSION 3.5)
 # Set extension name here
 set(TARGET_NAME pdal)
 
-set(CMAKE_CXX_STANDARD 14)
+# Force c++17 globally (FORCE overrides DuckDB's "11" CACHE entry) so that
+# libduckdb_static and plan_serializer use the same standard.  Without this,
+# DuckDB builds with c++11 (strong constexpr symbol) while plan_serializer
+# inherits c++17 from PDAL's interface requirements (COMDAT symbol), causing
+# a multiple-definition linker error on BufferedFileWriter::DEFAULT_OPEN_FLAGS.
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to enforce" FORCE)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # DuckDB's extension distribution supports vcpkg. As such, dependencies can be added in ./vcpkg.json and then
