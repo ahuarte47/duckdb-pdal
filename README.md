@@ -40,7 +40,8 @@ This is the list of available functions:
 
     ```sql
     SELECT * FROM PDAL_Drivers();
-
+	```
+	```sql
     ┌─────────────────────────────┬─────────────────────────────────────────────────────────────────────────────────┬───────────┐
     │            name             │                                     description                                 │  category │
     │           varchar           │                                       varchar                                   │  varchar  │
@@ -96,7 +97,8 @@ This is the list of available functions:
 
     ```sql
     SELECT * FROM PDAL_Read('path/to/your/pointcloud.las');
-
+	```
+	```sql
     ┌───────────┬───────────┬────────┬───────┐
     │     X     │     Y     │   Z    │       │
     │   double  │   double  │ double │  ...  │
@@ -117,7 +119,8 @@ This is the list of available functions:
     FROM
         PDAL_Read('./test/data/autzen_trim.laz', options => MAP {'start': 10})
     ;
-
+	```
+	```sql
     ┌───────────┬───────────┬─────────┬────────┬────────┬────────┐
     │     X     │    Y      │    Z    │  Red   │ Green  │  Blue  │
     │   double  │  double   │  double │ uint16 │ uint16 │ uint16 │
@@ -146,7 +149,8 @@ This is the list of available functions:
         PDAL_Read('./test/data/overlay-sample.tiff')
     LIMIT 3
     ;
-
+	```
+	```sql
     ┌──────────┬───────────┬───────┬───────┬───────┐
     │    X     │     Y     │  Red  │ Green │ Blue  │
     │  double  │  double   │ uint8 │ uint8 │ uint8 │
@@ -165,6 +169,8 @@ This is the list of available functions:
     FROM
         PDAL_Read('s3://my-bucket/autzen_trim.laz')
     ;
+	```
+	```sql
     ┌─────────────┐
     │ point_count │
     │    int64    │
@@ -195,7 +201,8 @@ This is the list of available functions:
     FROM
         PDAL_Info('./test/data/autzen_trim.la*')
     ;
-
+	```
+	```sql
     ┌──────────────────────┬─────────────┬───────────┬───────────┬────────┬───┬──────────┬──────────┬──────────┐
     │      file_name       │ point_count │   min_x   │  min_y    │ min_z  │ … │ offset_x │ offset_y │ offset_z │
     │       varchar        │   uint64    │  double   │ double    │ double │   │  double  │  double  │  double  │
@@ -216,7 +223,8 @@ This is the list of available functions:
     FROM
 	    PDAL_Info('./test/data/autzen_trim.laz')
     ;
-
+	```
+	```sql
     ┌───────────────────┬──────────┐
     │       name        │   type   │
     │      varchar      │ varchar  │
@@ -249,7 +257,8 @@ This is the list of available functions:
     FROM
         PDAL_pipeline('./test/data/autzen_trim.las', './test/data/autzen-pipeline.json')
     ;
-
+	```
+	```sql
     ┌──────────────┐
     │ count_star() │
     │    int64     │
@@ -274,6 +283,8 @@ This is the list of available functions:
             ]'
         )
     ;
+	```
+	```sql
     ┌──────────────┐
     │ count_star() │
     │    int64     │
@@ -312,7 +323,8 @@ This is the list of available functions:
     FROM
         __input
     ;
-
+	```
+	```sql
     ┌───────┬──────────┐
     │   c   │    s     │
     │ int64 │  double  │
@@ -369,6 +381,8 @@ This is the list of available functions:
             ]'
         )
     ;
+	```
+	```sql
     ┌──────────────┐
     │ count_star() │
     │    int64     │
