@@ -85,6 +85,7 @@
 #include <pdal/io/RasterWriter.hpp>
 #include <pdal/io/SbetReader.hpp>
 #include <pdal/io/SbetWriter.hpp>
+#include <pdal/io/StacReader.hpp>
 #include <pdal/io/TerrasolidReader.hpp>
 #include <pdal/io/TextReader.hpp>
 #include <pdal/io/TextWriter.hpp>
@@ -335,6 +336,9 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 
 			volatile auto *sbet_writer = new pdal::SbetWriter();
 			delete sbet_writer;
+
+			volatile auto *stac_reader = new pdal::StacReader();
+			delete stac_reader;
 
 			volatile auto *terrasolid_reader = new pdal::TerrasolidReader();
 			delete terrasolid_reader;

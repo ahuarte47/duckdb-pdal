@@ -18,13 +18,14 @@ SELECT
 FROM
     PDAL_Drivers()
 WHERE
-    name IN ('filters.assign', 'readers.copc', 'readers.las', 'writers.copc', 'writers.las')
+    name IN ('filters.assign', 'readers.copc', 'readers.las', 'readers.stac', 'writers.copc', 'writers.las')
 ORDER BY
     name;
 ----
 filters.assign
 readers.copc
 readers.las
+readers.stac
 writers.copc
 writers.las
 
