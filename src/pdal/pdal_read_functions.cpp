@@ -39,6 +39,33 @@ inline LogicalType PDAL_DIMENSION_TYPE() {
 	return LogicalType::STRUCT({{"name", varchar_type}, {"type", varchar_type}});
 }
 
+// Get QuickInfo of a LAZ/LAS file.
+pdal::QuickInfo GetQuickInfo(pdal::PointTableRef table, pdal::LasReader *reader) {
+	pdal::QuickInfo qi;
+
+	// NOTE:
+	// Do not call LasReader->preview(), it reopens the file again. If it is a remote file then it
+	// can be downloaded twice. Instead, use the header to fill the QuickInfo data.
+
+	pdal::PointLayoutPtr layout = table.layout();
+	pdal::LasHeader header = reader->header();
+
+	for (const auto &dimId : layout->dims()) {
+		qi.m_dimNames.push_back(layout->dimName(dimId));
+	}
+
+	if (!pdal::Utils::numericCast(header.pointCount(), qi.m_pointCount)) {
+		qi.m_pointCount = (std::numeric_limits<pdal::point_count_t>::max)();
+	}
+
+	qi.m_bounds = header.getBounds();
+	qi.m_srs = header.srs();
+	qi.m_metadata = reader->getMetadata();
+	qi.m_valid = true;
+
+	return qi;
+}
+
 struct PDAL_Info {
 	//------------------------------------------------------------------------------------------------------------------
 	// Bind
@@ -183,7 +210,8 @@ struct PDAL_Info {
 
 		for (idx_t out_idx = 0; out_idx < output_size; out_idx++, state.current_idx++) {
 			auto file = bind_data.files[state.current_idx];
-			auto file_ext = StringUtil::Lower(StringUtil::GetFileExtension(file.path));
+			auto lower_path = StringUtil::Lower(file.path);
+			auto file_ext = StringUtil::GetFileExtension(lower_path);
 
 			try {
 				pdal::Options read_options;
@@ -223,12 +251,12 @@ struct PDAL_Info {
 
 				// Get the header data from the file
 
-				if (file_ext == "las" || file_ext == "laz") {
+				if ((file_ext == "las" || file_ext == "laz") && !StringUtil::EndsWith(lower_path, ".copc.laz")) {
 					pdal::LasReader reader;
 					reader.setOptions(read_options);
 
 					reader.prepare(table);
-					info = reader.preview();
+					info = GetQuickInfo(table, &reader);
 					const pdal::LasHeader &header = reader.header();
 
 					extra_header = true;
@@ -706,10 +734,10 @@ struct PDAL_Read {
 	static unique_ptr<TableRef> ReplacementScan(ClientContext &, ReplacementScanInput &input,
 	                                            optional_ptr<ReplacementScanData>) {
 		auto &table_name = input.table_name;
-		auto file_ext = StringUtil::Lower(StringUtil::GetFileExtension(table_name));
+		auto lower_path = StringUtil::Lower(table_name);
 
 		// Check if the file extension is a common LiDAR file extension
-		if (file_ext == "las" || file_ext == "laz") {
+		if (StringUtil::EndsWith(lower_path, ".las") || StringUtil::EndsWith(lower_path, ".laz")) {
 			auto table_function = make_uniq<TableFunctionRef>();
 			vector<unique_ptr<ParsedExpression>> children;
 			children.push_back(make_uniq<ConstantExpression>(Value(table_name)));

@@ -1,6 +1,11 @@
 Release history
 ---------------
 
+0.4.1
+++++++++++++++++++
+
+- Fix `PDAL_Read` function when opening remote files with `http` or `https` protocols.
+
 0.4.0
 ++++++++++++++++++
 
