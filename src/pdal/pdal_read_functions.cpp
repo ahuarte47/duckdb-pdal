@@ -480,15 +480,6 @@ struct PDAL_Read {
 			throw InvalidInputException("File format not supported: %s", file_name);
 		}
 
-		// Create the PDAL reader based on file extension and set reader options.
-
-		pdal::StageFactory stage_factory;
-		pdal::Stage *reader = stage_factory.createStage(driver);
-
-		if (!reader) {
-			throw InvalidInputException("Driver not found for file: %s", file_name);
-		}
-
 		pdal::Options reader_options;
 		reader_options.add("filename", file_name);
 
@@ -498,18 +489,45 @@ struct PDAL_Read {
 			PdalUtils::ParseOptions(children, reader_options);
 		}
 
-		reader->setOptions(reader_options);
+		// Create the PDAL reader based on file extension to Make the PDAL PointTable where layout is stored,
+		// and set the output schema.
 
-		// Make the PDAL PointTable where layout is stored, and set the output schema.
+		auto lower_path = StringUtil::Lower(file_name);
+		auto file_ext = StringUtil::GetFileExtension(lower_path);
 
-		std::unique_ptr<pdal::PointTable> table = std::make_unique<pdal::PointTable>();
-		reader->prepare(*table);
+		pdal::point_count_t point_count = 0;
 
-		pdal::PointLayoutPtr layout = table->layout();
-		PdalUtils::ExtractLayout(layout, names, return_types);
+		if ((file_ext == "las" || file_ext == "laz") && !StringUtil::EndsWith(lower_path, ".copc.laz")) {
+			pdal::LasReader reader;
+			reader.setOptions(reader_options);
 
-		pdal::point_count_t point_count = reader->preview().m_pointCount;
-		stage_factory.destroyStage(reader);
+			pdal::FixedPointTable table(5);
+			reader.prepare(table);
+
+			pdal::PointLayoutPtr layout = table.layout();
+			PdalUtils::ExtractLayout(layout, names, return_types);
+
+			const pdal::LasHeader &header = reader.header();
+			point_count = header.pointCount();
+		} else {
+			pdal::StageFactory stage_factory;
+			pdal::Stage *reader = stage_factory.createStage(driver);
+
+			if (!reader) {
+				throw InvalidInputException("Driver not found for file: %s", file_name);
+			}
+
+			reader->setOptions(reader_options);
+
+			std::unique_ptr<pdal::PointTable> table = std::make_unique<pdal::PointTable>();
+			reader->prepare(*table);
+
+			pdal::PointLayoutPtr layout = table->layout();
+			PdalUtils::ExtractLayout(layout, names, return_types);
+
+			point_count = reader->preview().m_pointCount;
+			stage_factory.destroyStage(reader);
+		}
 
 		// Create and return bind data.
 

@@ -1,0 +1,16 @@
+# name: test/sql/pdal_read_extra_dims.test
+# description: test pdal extension
+# group: [sql]
+
+require pdal
+
+query III
+SELECT
+	InwardVectorX, InwardVectorY, InwardVectorZ
+FROM
+	PDAL_Read('./test/data/extra_dims.laz')
+LIMIT 2
+;
+----
+-0.028942010331188494	-0.00022770085579613045	0.0
+0.6728601347417199	0.042784509177720295	0.0

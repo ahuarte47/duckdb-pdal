@@ -1,6 +1,11 @@
 Release history
 ---------------
 
+0.4.2
+++++++++++++++++++
+
+- Fix `PDAL_Read` function when reading LAS/LAZ files with extra dimensions.
+
 0.4.1
 ++++++++++++++++++
 
