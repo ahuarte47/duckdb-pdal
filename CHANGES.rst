@@ -1,6 +1,11 @@
 Release history
 ---------------
 
+0.5.0
+++++++++++++++++++
+
+- Filter `h3` (https://pdal.io/en/2.9.0/stages/filters.h3.html) added to the list of included filters (@tlinhart).
+
 0.4.2
 ++++++++++++++++++
 

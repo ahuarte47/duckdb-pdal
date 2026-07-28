@@ -40,3 +40,15 @@ ORDER BY
     name;
 ----
 filters.assign
+
+query I
+SELECT
+    name
+FROM
+    PDAL_Drivers()
+WHERE
+    name = 'filters.h3' AND category = 'filters'
+ORDER BY
+    name;
+----
+filters.h3
