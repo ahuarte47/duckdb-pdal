@@ -1,0 +1,19 @@
+# name: test/sql/pdal_drivers.test
+# description: test pdal extension
+# group: [sql]
+
+require pdal
+
+query I
+SELECT
+    name
+FROM
+    PDAL_Drivers()
+WHERE
+    name IN ('filters.assign', 'filters.h3', 'filters.hag_delaunay') AND category = 'filters'
+ORDER BY
+    name;
+----
+filters.assign
+filters.h3
+filters.hag_delaunay

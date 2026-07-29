@@ -25,6 +25,7 @@
 #include <pdal/filters/ExpressionFilter.hpp>
 #include <pdal/filters/FerryFilter.hpp>
 #include <pdal/filters/H3Filter.hpp>
+#include <pdal/filters/HagDelaunayFilter.hpp>
 #include <pdal/filters/HeadFilter.hpp>
 #include <pdal/filters/InfoFilter.hpp>
 #include <pdal/filters/IQRFilter.hpp>
@@ -159,6 +160,9 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 
 			volatile auto *h3_filter = new pdal::H3Filter();
 			delete h3_filter;
+
+			volatile auto *hag_delaunay_filter = new pdal::HagDelaunayFilter();
+			delete hag_delaunay_filter;
 
 			volatile auto *head_filter = new pdal::HeadFilter();
 			delete head_filter;

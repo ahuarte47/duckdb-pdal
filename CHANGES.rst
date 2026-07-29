@@ -1,6 +1,11 @@
 Release history
 ---------------
 
+0.5.1
+++++++++++++++++++
+
+- Filter `hag_delaunay` (https://pdal.io/en/2.9.0/stages/filters.hag_delaunay.html) added to the list of included filters (@tlinhart).
+
 0.5.0
 ++++++++++++++++++
 
