@@ -10,10 +10,11 @@ SELECT
 FROM
     PDAL_Drivers()
 WHERE
-    name IN ('filters.assign', 'filters.h3', 'filters.hag_delaunay') AND category = 'filters'
+    name IN ('filters.assign', 'filters.h3', 'filters.hag_delaunay', 'filters.faceraster') AND category = 'filters'
 ORDER BY
     name;
 ----
 filters.assign
+filters.faceraster
 filters.h3
 filters.hag_delaunay

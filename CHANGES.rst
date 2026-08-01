@@ -1,6 +1,11 @@
 Release history
 ---------------
 
+0.5.2
+++++++++++++++++++
+
+- Filter `faceraster` (https://pdal.io/en/2.9.0/stages/filters.faceraster.html) added to the list of included filters (@tlinhart).
+
 0.5.1
 ++++++++++++++++++
 
