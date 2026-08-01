@@ -23,6 +23,7 @@
 #include <pdal/filters/ELMFilter.hpp>
 #include <pdal/filters/EstimateRankFilter.hpp>
 #include <pdal/filters/ExpressionFilter.hpp>
+#include <pdal/filters/FaceRasterFilter.hpp>
 #include <pdal/filters/FerryFilter.hpp>
 #include <pdal/filters/H3Filter.hpp>
 #include <pdal/filters/HagDelaunayFilter.hpp>
@@ -154,6 +155,9 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 
 			volatile auto *expression_filter = new pdal::ExpressionFilter();
 			delete expression_filter;
+
+			volatile auto *face_raster_filter = new pdal::FaceRasterFilter();
+			delete face_raster_filter;
 
 			volatile auto *ferry_filter = new pdal::FerryFilter();
 			delete ferry_filter;
