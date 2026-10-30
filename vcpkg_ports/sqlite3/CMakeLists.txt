@@ -19,6 +19,11 @@ target_compile_definitions(
         $<$<CONFIG:Debug>:SQLITE_ENABLE_SELECTTRACE>
         $<$<CONFIG:Debug>:SQLITE_ENABLE_WHERETRACE>
         $<$<COMPILE_LANGUAGE:RC>:RC_VERONLY>
+
+        # DuckDB needs these SQLite features for PROJ's in-memory VFS.
+        SQLITE_ENABLE_COLUMN_METADATA=1
+        SQLITE_USE_URI=1
+        SQLITE_TEMP_STORE=3
 )
 
 if (BUILD_SHARED_LIBS)
@@ -38,7 +43,7 @@ if (NOT WIN32)
     endforeach()
 
     if(SQLITE_ENABLE_FTS5 OR SQLITE_ENABLE_MATH_FUNCTIONS)
-        find_library(HAVE_LIBM m)
+        find_library(HAVE_LIBM m PATHS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES} ${CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES})
         if(HAVE_LIBM)
             target_link_libraries(sqlite3 PRIVATE m)
             string(APPEND PKGCONFIG_LIBS_PRIVATE " -lm")
@@ -66,7 +71,7 @@ if(NOT SQLITE3_SKIP_TOOLS)
         target_compile_definitions(sqlite3-bin PRIVATE SQLITE_HAVE_ZLIB)
     endif()
 
-    find_library(HAVE_LIBM m)
+    find_library(HAVE_LIBM m PATHS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES} ${CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES})
     if(HAVE_LIBM)
         target_link_libraries(sqlite3-bin PRIVATE m)
     endif()

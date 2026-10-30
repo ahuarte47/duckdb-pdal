@@ -6,6 +6,7 @@
         "expat",
         {
             "name": "proj",
+            "version>=": "9.8.1",
             "default-features": false,
             "features": [
                 "net"
@@ -13,6 +14,7 @@
         },
         {
             "name": "gdal",
+            "version>=": "3.12.4",
             "default-features": false,
             "features": [
                 "curl","expat","geos","lzma","openssl","sqlite3","zstd"
@@ -20,6 +22,7 @@
         },
         {
             "name": "pdal",
+            "version>=": "2.10.1",
             "default-features": false,
             "features": [
                 "zstd"
@@ -30,7 +33,10 @@
         "overlay-ports": [
             "./extension-ci-tools/vcpkg_ports",
             "./vcpkg_ports"
+        ],
+        "overlay-triplets": [
+            "./extension-ci-tools/toolchains"
         ]
     },
-    "builtin-baseline": "ce613c41372b23b1f51333815feb3edd87ef8a8b"
+    "builtin-baseline": "cd61e1e26a038e82d6550a3ebbe0fbbfe7da78e3"
 }

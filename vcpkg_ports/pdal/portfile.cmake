@@ -7,7 +7,7 @@ vcpkg_from_github(
     #[[
         Attention: pdal-dimbuilder must be updated together with pdal
     #]]
-    SHA512 4816c1ef8946937440541b5b8214dd5cbe706ccfbb82e5d67652e983eb6b386a02c1e0ba8ae7e22a0298a65b93953953bc4738d15a33f0f67a39dd6e48dfc076
+    SHA512 051e0a8ee2f03ad6eaf55b5843a41626ebc6d2517cf9eeedffda52878fbb9b7d854ea24174e2b3434f69ef41ab244e20e250f6c2c1083325b496489526fb8fea
     HEAD_REF master
     PATCHES
         dependencies.diff
@@ -17,19 +17,17 @@ vcpkg_from_github(
         rapidxml.diff
 )
 
-# Apply static build modifications
+# Build PDAL and its bundled libraries as static libraries.
 file(READ "${SOURCE_PATH}/cmake/libraries.cmake" LIBS_CONTENT)
 string(REPLACE "set(PDAL_LIB_TYPE \"SHARED\")" "set(PDAL_LIB_TYPE \"STATIC\")" LIBS_CONTENT "${LIBS_CONTENT}")
 file(WRITE "${SOURCE_PATH}/cmake/libraries.cmake" "${LIBS_CONTENT}")
 
-# Add install targets to PDAL_ADD_FREE_LIBRARY macro
 file(READ "${SOURCE_PATH}/cmake/macros.cmake" MACROS_CONTENT)
 string(REPLACE "    endif()\nendmacro(PDAL_ADD_FREE_LIBRARY)" "    endif()\n    install(TARGETS \${_name}\n        EXPORT PDALTargets\n        RUNTIME DESTINATION \${CMAKE_INSTALL_BINDIR}\n        LIBRARY DESTINATION \${CMAKE_INSTALL_LIBDIR}\n        ARCHIVE DESTINATION \${CMAKE_INSTALL_LIBDIR})\nendmacro(PDAL_ADD_FREE_LIBRARY)" MACROS_CONTENT "${MACROS_CONTENT}")
 file(WRITE "${SOURCE_PATH}/cmake/macros.cmake" "${MACROS_CONTENT}")
 
-# Fix export to include all vendor targets for static builds
 file(READ "${SOURCE_PATH}/CMakeLists.txt" CMAKE_CONTENT)
-string(REPLACE "export(\n    TARGETS\n        \${PDAL_LIB_NAME}\n    FILE\n        \"\${PDAL_BINARY_DIR}/PDALTargets.cmake\")" "export(\n    TARGETS\n        \${PDAL_LIB_NAME}\n        \${PDAL_ARBITER_LIB_NAME}\n        \${PDAL_H3_LIB_NAME}\n        \${PDAL_KAZHDAN_LIB_NAME}\n        \${PDAL_LEPCC_LIB_NAME}\n        \${PDAL_LAZPERF_LIB_NAME}\n    FILE\n        \"\${PDAL_BINARY_DIR}/PDALTargets.cmake\")" CMAKE_CONTENT "${CMAKE_CONTENT}")
+string(REPLACE "export(\n    TARGETS\n        \${PDAL_LIB_NAME}\n    FILE\n        \"\${PDAL_BINARY_DIR}/PDALTargets.cmake\")" "export(\n    TARGETS\n        \${PDAL_LIB_NAME}\n        \${PDAL_ARBITER_LIB_NAME}\n                \${PDAL_KAZHDAN_LIB_NAME}\n        \${PDAL_LEPCC_LIB_NAME}\n        \${PDAL_LAZPERF_LIB_NAME}\n    FILE\n        \"\${PDAL_BINARY_DIR}/PDALTargets.cmake\")" CMAKE_CONTENT "${CMAKE_CONTENT}")
 file(WRITE "${SOURCE_PATH}/CMakeLists.txt" "${CMAKE_CONTENT}")
 
 file(REMOVE_RECURSE
@@ -37,12 +35,16 @@ file(REMOVE_RECURSE
     "${SOURCE_PATH}/cmake/modules/FindGeoTIFF.cmake"
     "${SOURCE_PATH}/cmake/modules/FindICONV.cmake"
     "${SOURCE_PATH}/cmake/modules/FindZSTD.cmake"
+    "${SOURCE_PATH}/plugins/e57/libE57Format"
     "${SOURCE_PATH}/vendor/eigen"
+    "${SOURCE_PATH}/vendor/h3"
     "${SOURCE_PATH}/vendor/nanoflann"
     "${SOURCE_PATH}/vendor/nlohmann"
     "${SOURCE_PATH}/vendor/schema-validator"
     "${SOURCE_PATH}/vendor/utfcpp"
 )
+# PDAL includes "h3api.h", and some calls are decorated with PDALH3
+file(COPY "${CURRENT_PORT_DIR}/h3api.h" DESTINATION "${SOURCE_PATH}")
 # PDAL uses namespace 'NL' for nlohmann
 file(COPY "${CURRENT_INSTALLED_DIR}/include/nlohmann" DESTINATION "${SOURCE_PATH}/vendor/nlohmann/")
 file(APPEND "${SOURCE_PATH}/vendor/nlohmann/nlohmann/json.hpp" "\nnamespace NL = nlohmann;\n")
@@ -70,7 +72,7 @@ vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         "-DCMAKE_PROJECT_INCLUDE=${CMAKE_CURRENT_LIST_DIR}/cmake-project-include.cmake"
-        "-DDIMBUILDER_EXECUTABLE=${CURRENT_HOST_INSTALLED_DIR}/manual-tools/pdal-dimbuilder/dimbuilder${VCPKG_HOST_EXECUTABLE_SUFFIX}"
+        "-DDIMBUILDER_EXECUTABLE=${CURRENT_HOST_INSTALLED_DIR}/manual-tools/pdal-dimbuilder/${VERSION}/dimbuilder${VCPKG_HOST_EXECUTABLE_SUFFIX}"
         -DPDAL_PLUGIN_INSTALL_PATH=.
         -DWITH_TESTS:BOOL=OFF
         -DWITH_COMPLETION:BOOL=OFF
