@@ -55,7 +55,6 @@
 #include <pdal/filters/TransformationFilter.hpp>
 #include <pdal/filters/VoxelCenterNearestNeighborFilter.hpp>
 #include <pdal/filters/VoxelCentroidNearestNeighborFilter.hpp>
-#include <pdal/filters/ZsmoothFilter.hpp>
 // Readers/Writers
 #include <pdal/io/BpfReader.hpp>
 #include <pdal/io/BpfWriter.hpp>
@@ -251,9 +250,6 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 
 			volatile auto *voxel_centroid_nn_filter = new pdal::VoxelCentroidNearestNeighborFilter();
 			delete voxel_centroid_nn_filter;
-
-			volatile auto *zsmooth_filter = new pdal::ZsmoothFilter();
-			delete zsmooth_filter;
 
 			// ==========================================================================================================
 			// Readers & Writers

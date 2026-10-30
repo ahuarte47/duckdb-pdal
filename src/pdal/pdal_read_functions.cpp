@@ -8,6 +8,7 @@
 #include "duckdb/common/types.hpp"
 #include "duckdb/common/file_system.hpp"
 #include "duckdb/common/multi_file/multi_file_reader.hpp"
+#include "duckdb/common/vector/list_vector.hpp"
 #include "duckdb/optimizer/optimizer_extension.hpp"
 #include "duckdb/parser/expression/function_expression.hpp"
 #include "duckdb/parser/parsed_data/create_copy_function_info.hpp"
@@ -78,7 +79,7 @@ struct PDAL_Info {
 	};
 
 	static unique_ptr<FunctionData> Bind(ClientContext &context, TableFunctionBindInput &input,
-	                                     vector<LogicalType> &return_types, vector<string> &names) {
+	                                     vector<LogicalType> &return_types, vector<Identifier> &names) {
 		names.emplace_back("file_name");
 		return_types.push_back(LogicalType::VARCHAR);
 
@@ -202,7 +203,7 @@ struct PDAL_Info {
 		auto output_size = MinValue<idx_t>(STANDARD_VECTOR_SIZE, bind_data.files.size() - state.current_idx);
 
 		if (output_size == 0) {
-			output.SetCardinality(0);
+			output.SetChildCardinality(0);
 			return;
 		}
 
@@ -361,12 +362,12 @@ struct PDAL_Info {
 					ListVector::Reserve(output.data[attr_idx], total_count + number_of_point_records);
 					ListVector::SetListSize(output.data[attr_idx], total_count + number_of_point_records);
 
-					auto &ref_entry = ListVector::GetData(output.data[attr_idx])[out_idx];
-					auto &ref_vector = ListVector::GetEntry(output.data[attr_idx]);
+					auto &ref_entry = FlatVector::GetDataMutable<list_entry_t>(output.data[attr_idx])[out_idx];
+					auto &ref_vector = ListVector::GetChildMutable(output.data[attr_idx]);
 					ref_entry.offset = total_count;
 					ref_entry.length = number_of_point_records;
 
-					auto ref_data = FlatVector::GetData<uint64_t>(ref_vector);
+					auto ref_data = FlatVector::GetDataMutable<uint64_t>(ref_vector);
 
 					for (size_t i = 0; i < number_of_point_records; i++) {
 						ref_data[total_count + i] = number_of_points_by_return[i];
@@ -401,7 +402,7 @@ struct PDAL_Info {
 				continue;
 			}
 		}
-		output.SetCardinality(output_size);
+		output.SetChildCardinality(output_size);
 	}
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -431,13 +432,16 @@ struct PDAL_Info {
 	//------------------------------------------------------------------------------------------------------------------
 
 	static void Register(ExtensionLoader &loader) {
+		FunctionSignature signature;
+		signature.AddParameter("file_name_pattern", LogicalType::VARCHAR);
+
+		const TableFunction func("PDAL_Info", std::move(signature), Execute, Bind, Init);
+		loader.RegisterFunction(func);
+
 		InsertionOrderPreservingMap<string> tags;
 		tags.insert("ext", "pdal");
 		tags.insert("category", "table");
-
-		const TableFunction func("PDAL_Info", {LogicalType::VARCHAR}, Execute, Bind, Init);
-
-		RegisterFunction<TableFunction>(loader, func, CatalogType::TABLE_FUNCTION_ENTRY, DESCRIPTION, EXAMPLE, tags);
+		FunctionBuilder::AddTableFunctionDocs(loader, "PDAL_Info", DESCRIPTION, EXAMPLE, tags);
 	}
 };
 
@@ -467,7 +471,7 @@ struct PDAL_Read {
 	};
 
 	static unique_ptr<FunctionData> Bind(ClientContext &context, TableFunctionBindInput &input,
-	                                     vector<LogicalType> &return_types, vector<string> &names) {
+	                                     vector<LogicalType> &return_types, vector<Identifier> &names) {
 		auto file_name = StringValue::Get(input.inputs[0]);
 		auto &fs = FileSystem::GetFileSystem(context);
 
@@ -534,7 +538,10 @@ struct PDAL_Read {
 		auto bind_data = make_uniq<BindData>();
 		bind_data->file_name = file_name;
 		bind_data->reader_options = reader_options;
-		bind_data->column_names = names;
+		bind_data->column_names.reserve(names.size());
+		for (const auto &name : names) {
+			bind_data->column_names.emplace_back(name.GetIdentifierName());
+		}
 		bind_data->column_types = return_types;
 		bind_data->point_count = point_count;
 
@@ -639,7 +646,7 @@ struct PDAL_Read {
 		const auto point_start = gstate.point_idx;
 
 		if (output_size == 0) {
-			output.SetCardinality(0);
+			output.SetChildCardinality(0);
 			return;
 		}
 
@@ -656,7 +663,7 @@ struct PDAL_Read {
 		gstate.point_idx += output_size;
 
 		// Set the cardinality of the output
-		output.SetCardinality(output_size);
+		output.SetChildCardinality(output_size);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -687,7 +694,7 @@ struct PDAL_Read {
 				if (child->type == LogicalOperatorType::LOGICAL_GET) {
 					auto &get = child->Cast<LogicalGet>();
 
-					if (StringUtil::Lower(get.function.name) == "pdal_read") {
+					if (StringUtil::Lower(get.function.GetName().GetIdentifierName()) == "pdal_read") {
 						auto &bind_data = get.bind_data->Cast<BindData>();
 						bind_data.point_limit = limit.limit_val.GetConstantValue();
 						return;
@@ -758,7 +765,7 @@ struct PDAL_Read {
 		if (StringUtil::EndsWith(lower_path, ".las") || StringUtil::EndsWith(lower_path, ".laz")) {
 			auto table_function = make_uniq<TableFunctionRef>();
 			vector<unique_ptr<ParsedExpression>> children;
-			children.push_back(make_uniq<ConstantExpression>(Value(table_name)));
+			children.push_back(ConstantExpression::FromValue(Value(table_name)));
 			table_function->function = make_uniq<FunctionExpression>("PDAL_Read", std::move(children));
 			return std::move(table_function);
 		}
@@ -799,14 +806,13 @@ struct PDAL_Read {
 	//------------------------------------------------------------------------------------------------------------------
 
 	static void Register(ExtensionLoader &loader) {
-		InsertionOrderPreservingMap<string> tags;
-		tags.insert("ext", "pdal");
-		tags.insert("category", "table");
+		FunctionSignature signature;
+		signature.AddParameter("file_name", LogicalType::VARCHAR).WithTypedKwargs("options", [&](TypedKwargs &options) {
+			options.Add("options", LogicalType::MAP(LogicalType::VARCHAR, LogicalType::VARCHAR));
+		});
 
-		TableFunction func("PDAL_Read", {LogicalType::VARCHAR}, Execute, Bind, InitGlobal);
-
+		TableFunction func("PDAL_Read", std::move(signature), Execute, Bind, InitGlobal);
 		func.cardinality = Cardinality;
-		func.named_parameters["options"] = LogicalType::MAP(LogicalType::VARCHAR, LogicalType::VARCHAR);
 
 		// Enable projection pushdown - allows DuckDB to tell us which columns are needed
 		// The column_ids will be passed to InitGlobal via TableFunctionInitInput
@@ -816,7 +822,12 @@ struct PDAL_Read {
 		// that cannot be represented as simple TableFilter objects
 		func.pushdown_complex_filter = PushdownComplexFilter;
 
-		RegisterFunction<TableFunction>(loader, func, CatalogType::TABLE_FUNCTION_ENTRY, DESCRIPTION, EXAMPLE, tags);
+		loader.RegisterFunction(func);
+
+		InsertionOrderPreservingMap<string> tags;
+		tags.insert("ext", "pdal");
+		tags.insert("category", "table");
+		FunctionBuilder::AddTableFunctionDocs(loader, "PDAL_Read", DESCRIPTION, EXAMPLE, tags);
 
 		// Replacement scan
 		auto &db = loader.GetDatabaseInstance();

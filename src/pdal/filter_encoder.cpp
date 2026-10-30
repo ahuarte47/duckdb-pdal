@@ -15,7 +15,7 @@ static int GetDebugLevel() {
 	static int level = -1;
 	if (level == -1) {
 		const char *env = std::getenv("PDAL_DEBUG");
-		level = env ? std::atoi(env) : 0;
+		level = env ? std::stoi(env) : 0;
 	}
 	return level;
 }
@@ -75,7 +75,7 @@ std::string FilterEncoder::ValueToSQLLiteral(const Value &value, const LogicalTy
 ExpressionEncodeResult FilterEncoder::EncodeColumnRef(const BoundColumnRefExpression &expr,
                                                       const ExpressionEncodeContext &ctx) {
 	// Get the column binding - this contains the table index and column index
-	const auto &binding = expr.binding;
+	const auto &binding = expr.Binding();
 	const auto &column_ids = ctx.column_ids;
 	const auto &column_names = ctx.column_names;
 
@@ -113,25 +113,25 @@ ExpressionEncodeResult FilterEncoder::EncodeColumnRef(const BoundColumnRefExpres
 }
 
 ExpressionEncodeResult FilterEncoder::EncodeConstant(const BoundConstantExpression &expr) {
-	std::string sql = ValueToSQLLiteral(expr.value, expr.return_type);
+	std::string sql = ValueToSQLLiteral(expr.GetValue(), expr.GetReturnType());
 	return {sql, true};
 }
 
-ExpressionEncodeResult FilterEncoder::EncodeComparisonExpression(const BoundComparisonExpression &expr,
+ExpressionEncodeResult FilterEncoder::EncodeComparisonExpression(const BoundFunctionExpression &expr,
                                                                  const ExpressionEncodeContext &ctx) {
 	// Get the comparison operator
 	std::string op;
-	if (!GetComparisonOperator(expr.type, op)) {
+	if (!GetComparisonOperator(expr.GetExpressionType(), op)) {
 		return {"", false};
 	}
 
 	// Encode left and right sides
-	auto left_result = EncodeExpression(*expr.left, ctx);
+	auto left_result = EncodeExpression(BoundComparisonExpression::Left(expr), ctx);
 	if (!left_result.supported) {
 		return {"", false};
 	}
 
-	auto right_result = EncodeExpression(*expr.right, ctx);
+	auto right_result = EncodeExpression(BoundComparisonExpression::Right(expr), ctx);
 	if (!right_result.supported) {
 		return {"", false};
 	}
@@ -142,12 +142,14 @@ ExpressionEncodeResult FilterEncoder::EncodeComparisonExpression(const BoundComp
 
 ExpressionEncodeResult FilterEncoder::EncodeOperatorExpression(const BoundOperatorExpression &expr,
                                                                const ExpressionEncodeContext &ctx) {
+	const auto &children = expr.GetChildren();
+
 	// Handle NOT operator
-	if (expr.type == ExpressionType::OPERATOR_NOT) {
-		if (expr.children.size() != 1) {
+	if (expr.GetExpressionType() == ExpressionType::OPERATOR_NOT) {
+		if (children.size() != 1) {
 			return {"", false};
 		}
-		auto child_result = EncodeExpression(*expr.children[0], ctx);
+		auto child_result = EncodeExpression(*children[0], ctx);
 		if (!child_result.supported) {
 			return {"", false};
 		}
@@ -155,19 +157,19 @@ ExpressionEncodeResult FilterEncoder::EncodeOperatorExpression(const BoundOperat
 	}
 
 	// Handle IN operator
-	if (expr.type == ExpressionType::COMPARE_IN) {
-		if (expr.children.size() < 2) {
+	if (expr.GetExpressionType() == ExpressionType::COMPARE_IN) {
+		if (children.size() < 2) {
 			return {"", false};
 		}
-		auto left_result = EncodeExpression(*expr.children[0], ctx);
+		auto left_result = EncodeExpression(*children[0], ctx);
 		if (!left_result.supported) {
 			return {"", false};
 		}
 
 		std::string sql = "(";
 
-		for (size_t i = 1; i < expr.children.size(); i++) {
-			auto child_result = EncodeExpression(*expr.children[i], ctx);
+		for (size_t i = 1; i < children.size(); i++) {
+			auto child_result = EncodeExpression(*children[i], ctx);
 			if (!child_result.supported) {
 				return {"", false};
 			}
@@ -187,15 +189,16 @@ ExpressionEncodeResult FilterEncoder::EncodeOperatorExpression(const BoundOperat
 
 ExpressionEncodeResult FilterEncoder::EncodeConjunctionExpression(const BoundConjunctionExpression &expr,
                                                                   const ExpressionEncodeContext &ctx) {
-	if (expr.children.empty()) {
+	const auto &children = expr.GetChildren();
+	if (children.empty()) {
 		return {"", false};
 	}
 
-	bool is_and = (expr.type == ExpressionType::CONJUNCTION_AND);
+	bool is_and = (expr.GetExpressionType() == ExpressionType::CONJUNCTION_AND);
 	std::string conj_op = is_and ? " && " : " || ";
 	std::string sql;
 
-	for (const auto &child : expr.children) {
+	for (const auto &child : children) {
 		auto result = EncodeExpression(*child, ctx);
 
 		if (!result.supported) {
@@ -210,25 +213,30 @@ ExpressionEncodeResult FilterEncoder::EncodeConjunctionExpression(const BoundCon
 	return {sql, true};
 }
 
-ExpressionEncodeResult FilterEncoder::EncodeBetweenExpression(const BoundBetweenExpression &expr,
+ExpressionEncodeResult FilterEncoder::EncodeBetweenExpression(const BoundFunctionExpression &expr,
                                                               const ExpressionEncodeContext &ctx) {
-	if (expr.input->GetExpressionClass() != ExpressionClass::BOUND_COLUMN_REF ||
-	    expr.lower->GetExpressionClass() != ExpressionClass::BOUND_CONSTANT ||
-	    expr.upper->GetExpressionClass() != ExpressionClass::BOUND_CONSTANT) {
+	const auto &input = BoundBetweenExpression::Input(expr);
+	const auto &lower = BoundBetweenExpression::LowerBound(expr);
+	const auto &upper = BoundBetweenExpression::UpperBound(expr);
+	if (input.GetExpressionClass() != ExpressionClass::BOUND_COLUMN_REF ||
+	    lower.GetExpressionClass() != ExpressionClass::BOUND_CONSTANT ||
+	    upper.GetExpressionClass() != ExpressionClass::BOUND_CONSTANT) {
 		return {"", false};
 	}
 
-	const auto &col_ref = EncodeColumnRef(expr.input->Cast<BoundColumnRefExpression>(), ctx);
+	const auto &col_ref = EncodeColumnRef(input.Cast<BoundColumnRefExpression>(), ctx);
 
 	if (!col_ref.supported) {
 		return {"", false};
 	}
 
-	const auto &lower_const = expr.lower->Cast<BoundConstantExpression>();
-	const auto &upper_const = expr.upper->Cast<BoundConstantExpression>();
+	const auto &lower_const = lower.Cast<BoundConstantExpression>();
+	const auto &upper_const = upper.Cast<BoundConstantExpression>();
 
-	std::string sql = "(" + col_ref.sql + " >= " + lower_const.value.ToString() + " && " + col_ref.sql +
-	                  " <= " + upper_const.value.ToString() + ")";
+	std::string lower_op = BoundBetweenExpression::LowerInclusive(expr) ? " >= " : " > ";
+	std::string upper_op = BoundBetweenExpression::UpperInclusive(expr) ? " <= " : " < ";
+	std::string sql = "(" + col_ref.sql + lower_op + lower_const.GetValue().ToString() + " && " + col_ref.sql +
+	                  upper_op + upper_const.GetValue().ToString() + ")";
 	return {sql, true};
 }
 
@@ -240,17 +248,23 @@ ExpressionEncodeResult FilterEncoder::EncodeExpression(const Expression &expr, c
 	case ExpressionClass::BOUND_CONSTANT:
 		return EncodeConstant(expr.Cast<BoundConstantExpression>());
 
-	case ExpressionClass::BOUND_COMPARISON:
-		return EncodeComparisonExpression(expr.Cast<BoundComparisonExpression>(), ctx);
-
 	case ExpressionClass::BOUND_OPERATOR:
 		return EncodeOperatorExpression(expr.Cast<BoundOperatorExpression>(), ctx);
 
 	case ExpressionClass::BOUND_CONJUNCTION:
 		return EncodeConjunctionExpression(expr.Cast<BoundConjunctionExpression>(), ctx);
 
-	case ExpressionClass::BOUND_BETWEEN:
-		return EncodeBetweenExpression(expr.Cast<BoundBetweenExpression>(), ctx);
+	case ExpressionClass::BOUND_FUNCTION: {
+		const auto &function = expr.Cast<BoundFunctionExpression>();
+		if (BoundComparisonExpression::IsComparison(function.GetExpressionType())) {
+			return EncodeComparisonExpression(function, ctx);
+		}
+		if (function.GetExpressionType() == ExpressionType::COMPARE_BETWEEN &&
+		    BoundBetweenExpression::HasValidBindData(function)) {
+			return EncodeBetweenExpression(function, ctx);
+		}
+		return {"", false};
+	}
 
 	default:
 		PDAL_FILTER_DEBUG_LOG(1, "EncodeExpression: unsupported expression class %d", (int)expr.GetExpressionClass());

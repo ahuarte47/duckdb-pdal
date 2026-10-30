@@ -18,10 +18,10 @@ public:
 	static void CopyLayout(const pdal::PointLayoutPtr input, const pdal::PointLayoutPtr output);
 
 	// Extract DuckDB names and types from a PDAL PointLayout.
-	static void ExtractLayout(const pdal::PointLayoutPtr layout, vector<string> &names, vector<LogicalType> &types);
+	static void ExtractLayout(const pdal::PointLayoutPtr layout, vector<Identifier> &names, vector<LogicalType> &types);
 
 	// Fill a PDAL PointLayout from a set of DuckDB names and types.
-	static std::vector<idx_t> FillLayout(pdal::PointLayoutPtr layout, const vector<string> &names,
+	static std::vector<idx_t> FillLayout(pdal::PointLayoutPtr layout, const vector<Identifier> &names,
 	                                     const vector<LogicalType> &types, Logger &logger);
 
 	// Extract a chunk of points from a PDAL PointView into a DuckDB DataChunk.

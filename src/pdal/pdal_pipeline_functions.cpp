@@ -7,6 +7,7 @@
 #include "duckdb/common/types.hpp"
 #include "duckdb/common/file_system.hpp"
 #include "duckdb/common/multi_file/multi_file_reader.hpp"
+#include "duckdb/logging/logger.hpp"
 #include "duckdb/optimizer/optimizer_extension.hpp"
 #include "duckdb/parser/expression/function_expression.hpp"
 #include "duckdb/parser/parsed_data/create_copy_function_info.hpp"
@@ -45,7 +46,7 @@ struct PDAL_Pipeline {
 	};
 
 	static unique_ptr<FunctionData> Bind(ClientContext &context, TableFunctionBindInput &input,
-	                                     vector<LogicalType> &return_types, vector<string> &names) {
+	                                     vector<LogicalType> &return_types, vector<Identifier> &names) {
 		auto file_name = StringValue::Get(input.inputs[0]);
 		auto the_pipeline = StringValue::Get(input.inputs[1]);
 		auto &fs = FileSystem::GetFileSystem(context);
@@ -162,7 +163,7 @@ struct PDAL_Pipeline {
 				if (child->type == LogicalOperatorType::LOGICAL_GET) {
 					auto &get = child->Cast<LogicalGet>();
 
-					if (StringUtil::Lower(get.function.name) == "pdal_pipeline") {
+					if (StringUtil::Lower(get.function.GetName().GetIdentifierName()) == "pdal_pipeline") {
 						auto &bind_data = get.bind_data->Cast<BindData>();
 						bind_data.point_limit = limit.limit_val.GetConstantValue();
 						return;
@@ -195,10 +196,10 @@ struct PDAL_Pipeline {
 
 		// Set the cardinality of the output
 		if (output_size == 0) {
-			output.SetCardinality(0);
+			output.SetChildCardinality(0);
 			return;
 		}
-		output.SetCardinality(output_size);
+		output.SetChildCardinality(output_size);
 
 		// Load current subset of points into the output
 		pdal::PointViewPtr view = *(bind_data.pipeline->views().begin());
@@ -249,20 +250,26 @@ struct PDAL_Pipeline {
 	//------------------------------------------------------------------------------------------------------------------
 
 	static void Register(ExtensionLoader &loader) {
-		InsertionOrderPreservingMap<string> tags;
-		tags.insert("ext", "pdal");
-		tags.insert("category", "table");
+		FunctionSignature signature;
+		signature.AddParameter("filename", LogicalType::VARCHAR)
+		    .AddParameter("pipeline_or_file_name", LogicalType::VARCHAR)
+		    .WithTypedKwargs("options", [&](TypedKwargs &options) {
+			    options.Add("options", LogicalType::MAP(LogicalType::VARCHAR, LogicalType::VARCHAR));
+		    });
 
-		TableFunction func("PDAL_Pipeline", {LogicalType::VARCHAR, LogicalType::VARCHAR}, Execute, Bind, InitGlobal);
-
+		TableFunction func("PDAL_Pipeline", std::move(signature), Execute, Bind, InitGlobal);
 		func.cardinality = Cardinality;
-		func.named_parameters["options"] = LogicalType::MAP(LogicalType::VARCHAR, LogicalType::VARCHAR);
 
 		// Enable projection pushdown - allows DuckDB to tell us which columns are needed
 		// The column_ids will be passed to InitGlobal via TableFunctionInitInput
 		func.projection_pushdown = true;
 
-		RegisterFunction<TableFunction>(loader, func, CatalogType::TABLE_FUNCTION_ENTRY, DESCRIPTION, EXAMPLE, tags);
+		loader.RegisterFunction(func);
+
+		InsertionOrderPreservingMap<string> tags;
+		tags.insert("ext", "pdal");
+		tags.insert("category", "table");
+		FunctionBuilder::AddTableFunctionDocs(loader, "PDAL_Pipeline", DESCRIPTION, EXAMPLE, tags);
 
 		// Register optimizer extension for LIMIT pushdown
 		auto &db = loader.GetDatabaseInstance();
@@ -298,7 +305,7 @@ struct PDAL_PipelineTable {
 	};
 
 	static unique_ptr<FunctionData> Bind(ClientContext &context, TableFunctionBindInput &input,
-	                                     vector<LogicalType> &return_types, vector<string> &names) {
+	                                     vector<LogicalType> &return_types, vector<Identifier> &names) {
 		auto input_table = input.inputs[0];
 		auto the_pipeline = StringValue::Get(input.inputs[1]);
 
@@ -352,7 +359,13 @@ struct PDAL_PipelineTable {
 
 		// Return bind data.
 
-		auto bind_data = make_uniq<BindData>(names, return_types);
+		vector<string> field_names;
+		field_names.reserve(names.size());
+		for (const auto &name : names) {
+			field_names.emplace_back(name.GetIdentifierName());
+		}
+
+		auto bind_data = make_uniq<BindData>(std::move(field_names), return_types);
 		bind_data->pipeline = std::move(pipeline);
 		bind_data->reader = std::move(reader);
 		bind_data->table = std::move(table);
@@ -406,7 +419,7 @@ struct PDAL_PipelineTable {
 		input.Flatten();
 		PdalUtils::FillDataChunk(view, input, field_indexes);
 
-		output.SetCardinality(0);
+		output.SetChildCardinality(0);
 		gstate.input_point_count += input.size();
 
 		return OperatorResultType::NEED_MORE_INPUT;
@@ -435,10 +448,10 @@ struct PDAL_PipelineTable {
 
 		// Set the cardinality of the output
 		if (output_size == 0) {
-			output.SetCardinality(0);
+			output.SetChildCardinality(0);
 			return OperatorFinalizeResultType::FINISHED;
 		}
-		output.SetCardinality(output_size);
+		output.SetChildCardinality(output_size);
 
 		// Load current subset of points into the output.
 		pdal::PointViewPtr view = *(bind_data.pipeline->views().begin());
@@ -472,12 +485,10 @@ struct PDAL_PipelineTable {
 	//------------------------------------------------------------------------------------------------------------------
 
 	static void Register(ExtensionLoader &loader) {
-		InsertionOrderPreservingMap<string> tags;
-		tags.insert("ext", "pdal");
-		tags.insert("category", "table");
+		FunctionSignature signature;
+		signature.AddParameter("table", LogicalType::TABLE).AddParameter("pipeline_or_file_name", LogicalType::VARCHAR);
 
-		TableFunction func("PDAL_PipelineTable", {LogicalType::TABLE, LogicalType::VARCHAR}, nullptr, Bind, InitGlobal);
-
+		TableFunction func("PDAL_PipelineTable", std::move(signature), nullptr, Bind, InitGlobal);
 		func.in_out_function = Function;
 		func.in_out_function_final = Finalize;
 
@@ -485,7 +496,12 @@ struct PDAL_PipelineTable {
 		// The column_ids will be passed to InitGlobal via TableFunctionInitInput
 		func.projection_pushdown = true;
 
-		RegisterFunction<TableFunction>(loader, func, CatalogType::TABLE_FUNCTION_ENTRY, DESCRIPTION, EXAMPLE, tags);
+		loader.RegisterFunction(func);
+
+		InsertionOrderPreservingMap<string> tags;
+		tags.insert("ext", "pdal");
+		tags.insert("category", "table");
+		FunctionBuilder::AddTableFunctionDocs(loader, "PDAL_PipelineTable", DESCRIPTION, EXAMPLE, tags);
 	}
 };
 

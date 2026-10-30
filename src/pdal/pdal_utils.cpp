@@ -1,5 +1,8 @@
 #include "pdal_utils.hpp"
 
+// DuckDB
+#include "duckdb/logging/logger.hpp"
+
 namespace duckdb {
 
 // Parse a DuckDB struct array of key-value pairs into a PDAL Options object.
@@ -27,7 +30,8 @@ void PdalUtils::CopyLayout(const pdal::PointLayoutPtr input, const pdal::PointLa
 }
 
 // Extract DuckDB names and types from a PDAL PointLayout.
-void PdalUtils::ExtractLayout(const pdal::PointLayoutPtr layout, vector<string> &names, vector<LogicalType> &types) {
+void PdalUtils::ExtractLayout(const pdal::PointLayoutPtr layout, vector<Identifier> &names,
+                              vector<LogicalType> &types) {
 	for (const auto &dimId : layout->dims()) {
 		std::string name = layout->dimName(dimId);
 		const pdal::Dimension::Detail *detail = layout->dimDetail(dimId);
@@ -84,7 +88,7 @@ void PdalUtils::ExtractLayout(const pdal::PointLayoutPtr layout, vector<string> 
 }
 
 // Fill a PDAL PointLayout from a set of DuckDB names and types.
-std::vector<idx_t> PdalUtils::FillLayout(pdal::PointLayoutPtr layout, const vector<string> &names,
+std::vector<idx_t> PdalUtils::FillLayout(pdal::PointLayoutPtr layout, const vector<Identifier> &names,
                                          const vector<LogicalType> &types, Logger &logger) {
 	if (names.size() != types.size()) {
 		throw InvalidInputException("SQL types and names size mismatch");
@@ -93,7 +97,7 @@ std::vector<idx_t> PdalUtils::FillLayout(pdal::PointLayoutPtr layout, const vect
 	std::vector<idx_t> field_indexes;
 
 	for (idx_t i = 0; i < names.size(); i++) {
-		const auto &name = names[i];
+		const auto &name = names[i].GetIdentifierName();
 		const auto &type = types[i];
 
 		switch (type.id()) {
@@ -161,52 +165,52 @@ void PdalUtils::ExtractDataChunk(const pdal::PointViewPtr view, idx_t point_star
 			switch (t) {
 			case pdal::Dimension::Type::Float: {
 				float value = point.getFieldAs<float>(dimId);
-				output.SetValue(col_idx, row_idx, duckdb::Value::FLOAT(value));
+				output.data[col_idx].SetValue(row_idx, duckdb::Value::FLOAT(value));
 				break;
 			}
 			case pdal::Dimension::Type::Double: {
 				double value = point.getFieldAs<double>(dimId);
-				output.SetValue(col_idx, row_idx, duckdb::Value::DOUBLE(value));
+				output.data[col_idx].SetValue(row_idx, duckdb::Value::DOUBLE(value));
 				break;
 			}
 			case pdal::Dimension::Type::Signed8: {
 				int8_t value = point.getFieldAs<int8_t>(dimId);
-				output.SetValue(col_idx, row_idx, duckdb::Value::TINYINT(value));
+				output.data[col_idx].SetValue(row_idx, duckdb::Value::TINYINT(value));
 				break;
 			}
 			case pdal::Dimension::Type::Signed16: {
 				int16_t value = point.getFieldAs<int16_t>(dimId);
-				output.SetValue(col_idx, row_idx, duckdb::Value::SMALLINT(value));
+				output.data[col_idx].SetValue(row_idx, duckdb::Value::SMALLINT(value));
 				break;
 			}
 			case pdal::Dimension::Type::Signed32: {
 				int32_t value = point.getFieldAs<int32_t>(dimId);
-				output.SetValue(col_idx, row_idx, duckdb::Value::INTEGER(value));
+				output.data[col_idx].SetValue(row_idx, duckdb::Value::INTEGER(value));
 				break;
 			}
 			case pdal::Dimension::Type::Signed64: {
 				int64_t value = point.getFieldAs<int64_t>(dimId);
-				output.SetValue(col_idx, row_idx, duckdb::Value::BIGINT(value));
+				output.data[col_idx].SetValue(row_idx, duckdb::Value::BIGINT(value));
 				break;
 			}
 			case pdal::Dimension::Type::Unsigned8: {
 				uint8_t value = point.getFieldAs<uint8_t>(dimId);
-				output.SetValue(col_idx, row_idx, duckdb::Value::UTINYINT(value));
+				output.data[col_idx].SetValue(row_idx, duckdb::Value::UTINYINT(value));
 				break;
 			}
 			case pdal::Dimension::Type::Unsigned16: {
 				uint16_t value = point.getFieldAs<uint16_t>(dimId);
-				output.SetValue(col_idx, row_idx, duckdb::Value::USMALLINT(value));
+				output.data[col_idx].SetValue(row_idx, duckdb::Value::USMALLINT(value));
 				break;
 			}
 			case pdal::Dimension::Type::Unsigned32: {
 				uint32_t value = point.getFieldAs<uint32_t>(dimId);
-				output.SetValue(col_idx, row_idx, duckdb::Value::UINTEGER(value));
+				output.data[col_idx].SetValue(row_idx, duckdb::Value::UINTEGER(value));
 				break;
 			}
 			case pdal::Dimension::Type::Unsigned64: {
 				uint64_t value = point.getFieldAs<uint64_t>(dimId);
-				output.SetValue(col_idx, row_idx, duckdb::Value::UBIGINT(value));
+				output.data[col_idx].SetValue(row_idx, duckdb::Value::UBIGINT(value));
 				break;
 			}
 			default:

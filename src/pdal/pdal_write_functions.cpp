@@ -6,6 +6,7 @@
 #include "duckdb/main/extension/extension_loader.hpp"
 #include "duckdb/common/types.hpp"
 #include "duckdb/common/file_system.hpp"
+#include "duckdb/logging/logger.hpp"
 #include "duckdb/parser/expression/function_expression.hpp"
 #include "duckdb/parser/parsed_data/create_copy_function_info.hpp"
 #include "duckdb/parser/tableref/table_function_ref.hpp"
@@ -49,7 +50,7 @@ struct PDAL_Write {
 	};
 
 	static unique_ptr<FunctionData> Bind(ClientContext &context, CopyFunctionBindInput &input,
-	                                     const vector<string> &names, const vector<LogicalType> &types) {
+	                                     const vector<Identifier> &names, const vector<LogicalType> &types) {
 		std::string file_name = input.info.file_path;
 		std::string driver_name;
 
@@ -59,7 +60,9 @@ struct PDAL_Write {
 		// Check all the options in the copy info and set.
 
 		for (auto &option : input.info.options) {
-			if (StringUtil::Upper(option.first) == "DRIVER") {
+			const auto key = StringUtil::Upper(option.first.GetIdentifierName());
+
+			if (key == "DRIVER") {
 				auto set = option.second.front();
 				if (set.type().id() == LogicalTypeId::VARCHAR) {
 					driver_name = StringUtil::Lower(set.GetValue<string>());
@@ -70,7 +73,7 @@ struct PDAL_Write {
 				} else {
 					throw BinderException("Driver name must be a string");
 				}
-			} else if (StringUtil::Upper(option.first) == "CREATION_OPTIONS") {
+			} else if (key == "CREATION_OPTIONS") {
 				auto set = option.second;
 				for (auto &s : set) {
 					if (s.type().id() != LogicalTypeId::VARCHAR) {
@@ -83,7 +86,7 @@ struct PDAL_Write {
 					writer_options.add(StringUtil::Lower(kv_pair[0]), kv_pair[1]);
 				}
 			} else {
-				throw BinderException("Unknown option '%s'", option.first);
+				throw BinderException("Unknown option '%s'", key);
 			}
 		}
 
@@ -125,7 +128,13 @@ struct PDAL_Write {
 
 		// Return bind data.
 
-		auto bind_data = make_uniq<BindData>(input.info.file_path, names, types);
+		vector<string> field_names;
+		field_names.reserve(names.size());
+		for (const auto &name : names) {
+			field_names.emplace_back(name.GetIdentifierName());
+		}
+
+		auto bind_data = make_uniq<BindData>(input.info.file_path, std::move(field_names), types);
 		bind_data->stage_factory = std::move(stage_factory);
 		bind_data->reader = std::move(reader);
 		bind_data->writer = writer;

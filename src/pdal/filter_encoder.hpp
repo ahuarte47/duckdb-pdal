@@ -2,6 +2,13 @@
 
 #include "duckdb.hpp"
 #include "duckdb/planner/expression.hpp"
+#include "duckdb/planner/expression/bound_between_expression.hpp"
+#include "duckdb/planner/expression/bound_columnref_expression.hpp"
+#include "duckdb/planner/expression/bound_comparison_expression.hpp"
+#include "duckdb/planner/expression/bound_conjunction_expression.hpp"
+#include "duckdb/planner/expression/bound_constant_expression.hpp"
+#include "duckdb/planner/expression/bound_function_expression.hpp"
+#include "duckdb/planner/expression/bound_operator_expression.hpp"
 #include "duckdb/planner/filter/in_filter.hpp"
 
 namespace duckdb {
@@ -79,7 +86,7 @@ private:
 	/**
 	 * Encode a comparison expression (left OP right).
 	 */
-	static ExpressionEncodeResult EncodeComparisonExpression(const BoundComparisonExpression &expr,
+	static ExpressionEncodeResult EncodeComparisonExpression(const BoundFunctionExpression &expr,
 	                                                         const ExpressionEncodeContext &ctx);
 
 	/**
@@ -91,7 +98,7 @@ private:
 	/**
 	 * Encode a BETWEEN expression (input BETWEEN lower AND upper).
 	 */
-	static ExpressionEncodeResult EncodeBetweenExpression(const BoundBetweenExpression &expr,
+	static ExpressionEncodeResult EncodeBetweenExpression(const BoundFunctionExpression &expr,
 	                                                      const ExpressionEncodeContext &ctx);
 
 	/**

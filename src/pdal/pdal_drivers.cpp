@@ -30,7 +30,7 @@ struct PDAL_Drivers {
 	};
 
 	static unique_ptr<FunctionData> Bind(ClientContext &context, TableFunctionBindInput &input,
-	                                     vector<LogicalType> &return_types, vector<string> &names) {
+	                                     vector<LogicalType> &return_types, vector<Identifier> &names) {
 		names.emplace_back("name");
 		return_types.push_back(LogicalType::VARCHAR);
 		names.emplace_back("description");
@@ -87,7 +87,7 @@ struct PDAL_Drivers {
 			}
 			count++;
 		}
-		output.SetCardinality(count);
+		output.SetChildCardinality(count);
 	}
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -132,12 +132,13 @@ struct PDAL_Drivers {
 	//------------------------------------------------------------------------------------------------------------------
 
 	static void Register(ExtensionLoader &loader) {
+		const TableFunction func("PDAL_Drivers", {}, Execute, Bind, Init);
+		loader.RegisterFunction(func);
+
 		InsertionOrderPreservingMap<string> tags;
 		tags.insert("ext", "pdal");
 		tags.insert("category", "table");
-
-		const TableFunction func("PDAL_Drivers", {}, Execute, Bind, Init);
-		RegisterFunction<TableFunction>(loader, func, CatalogType::TABLE_FUNCTION_ENTRY, DESCRIPTION, EXAMPLE, tags);
+		FunctionBuilder::AddTableFunctionDocs(loader, "PDAL_Drivers", DESCRIPTION, EXAMPLE, tags);
 	}
 };
 
