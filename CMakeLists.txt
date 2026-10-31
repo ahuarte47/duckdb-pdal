@@ -48,6 +48,9 @@ add_subdirectory(src/pdal)
 build_static_extension(${TARGET_NAME} ${EXTENSION_SOURCES})
 build_loadable_extension(${TARGET_NAME} " " ${EXTENSION_SOURCES})
 
+target_compile_definitions(${EXTENSION_NAME} PRIVATE NOMINMAX)
+target_compile_definitions(${LOADABLE_EXTENSION_NAME} PRIVATE NOMINMAX)
+
 # Include PDAL directories in the target
 target_include_directories(
   ${EXTENSION_NAME}
