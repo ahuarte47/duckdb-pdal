@@ -1,6 +1,11 @@
 Release history
 ---------------
 
+0.7.0
+++++++++++++++++++
+
+- Added 30 existing internal filters to the list of available filters.
+
 0.6.0
 ++++++++++++++++++
 
