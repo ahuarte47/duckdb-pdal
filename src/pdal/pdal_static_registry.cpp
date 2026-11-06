@@ -19,42 +19,75 @@
 #include <pdal/filters/DBSCANFilter.hpp>
 #include <pdal/filters/DecimationFilter.hpp>
 #include <pdal/filters/DelaunayFilter.hpp>
+#include <pdal/filters/DEMFilter.hpp>
 #include <pdal/filters/DividerFilter.hpp>
 #include <pdal/filters/ELMFilter.hpp>
 #include <pdal/filters/EstimateRankFilter.hpp>
 #include <pdal/filters/ExpressionFilter.hpp>
+#include <pdal/filters/ExpressionStatsFilter.hpp>
 #include <pdal/filters/FaceRasterFilter.hpp>
+#include <pdal/filters/FarthestPointSamplingFilter.hpp>
 #include <pdal/filters/FerryFilter.hpp>
+#include <pdal/filters/GeomDistanceFilter.hpp>
+#include <pdal/filters/GeoreferenceFilter.hpp>
+#include <pdal/filters/GridDecimationFilter.hpp>
+#include <pdal/filters/GroupByFilter.hpp>
 #include <pdal/filters/H3Filter.hpp>
 #include <pdal/filters/HagDelaunayFilter.hpp>
+#include <pdal/filters/HagDemFilter.hpp>
+#include <pdal/filters/HagNnFilter.hpp>
 #include <pdal/filters/HeadFilter.hpp>
+#include <pdal/filters/HexBinFilter.hpp>
 #include <pdal/filters/InfoFilter.hpp>
 #include <pdal/filters/IQRFilter.hpp>
+#include <pdal/filters/LabelDuplicatesFilter.hpp>
+#include <pdal/filters/LiTreeFilter.hpp>
+#include <pdal/filters/LloydKMeansFilter.hpp>
 #include <pdal/filters/LocateFilter.hpp>
+#include <pdal/filters/LOFFilter.hpp>
+#include <pdal/filters/M3C2Filter.hpp>
 #include <pdal/filters/MADFilter.hpp>
 #include <pdal/filters/MergeFilter.hpp>
+#include <pdal/filters/MiniballFilter.hpp>
+#include <pdal/filters/MongoExpressionFilter.hpp>
 #include <pdal/filters/MortonOrderFilter.hpp>
+#include <pdal/filters/NeighborClassifierFilter.hpp>
+#include <pdal/filters/NNDistanceFilter.hpp>
 #include <pdal/filters/NormalFilter.hpp>
+#include <pdal/filters/OptimalNeighborhoodFilter.hpp>
 #include <pdal/filters/OutlierFilter.hpp>
 #include <pdal/filters/OverlayFilter.hpp>
+#include <pdal/filters/PlaneFitFilter.hpp>
 #include <pdal/filters/PMFFilter.hpp>
+#include <pdal/filters/PoissonFilter.hpp>
+#include <pdal/filters/ProjPipelineFilter.hpp>
+#include <pdal/filters/RadialDensityFilter.hpp>
+#include <pdal/filters/RadiusAssignFilter.hpp>
 #include <pdal/filters/RandomizeFilter.hpp>
 #include <pdal/filters/RangeFilter.hpp>
 #include <pdal/filters/ReciprocityFilter.hpp>
 #include <pdal/filters/ReprojectionFilter.hpp>
 #include <pdal/filters/ReturnsFilter.hpp>
 #include <pdal/filters/SampleFilter.hpp>
+#include <pdal/filters/SeparateScanLineFilter.hpp>
 #include <pdal/filters/ShellFilter.hpp>
 #include <pdal/filters/SkewnessBalancingFilter.hpp>
 #include <pdal/filters/SMRFilter.hpp>
 #include <pdal/filters/SortFilter.hpp>
+#include <pdal/filters/SparseSurfaceFilter.hpp>
 #include <pdal/filters/SplitterFilter.hpp>
 #include <pdal/filters/StatsFilter.hpp>
 #include <pdal/filters/StreamCallbackFilter.hpp>
+#include <pdal/filters/SupervoxelFilter.hpp>
 #include <pdal/filters/TailFilter.hpp>
 #include <pdal/filters/TransformationFilter.hpp>
 #include <pdal/filters/VoxelCenterNearestNeighborFilter.hpp>
 #include <pdal/filters/VoxelCentroidNearestNeighborFilter.hpp>
+#include <pdal/filters/VoxelDownsizeFilter.hpp>
+#include <pdal/filters/ZsmoothFilter.hpp>
+// Private types and utilities
+#include <pdal/filters/private/DimRange.hpp>
+#include <pdal/private/gdal/Raster.hpp>
 // Readers/Writers
 #include <pdal/io/BpfReader.hpp>
 #include <pdal/io/BpfWriter.hpp>
@@ -143,6 +176,9 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 			volatile auto *delaunay_filter = new pdal::DelaunayFilter();
 			delete delaunay_filter;
 
+			volatile auto *dem_filter = new pdal::DEMFilter();
+			delete dem_filter;
+
 			volatile auto *divider_filter = new pdal::DividerFilter();
 			delete divider_filter;
 
@@ -155,11 +191,29 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 			volatile auto *expression_filter = new pdal::ExpressionFilter();
 			delete expression_filter;
 
+			volatile auto *expression_stats_filter = new pdal::ExpressionStatsFilter();
+			delete expression_stats_filter;
+
 			volatile auto *face_raster_filter = new pdal::FaceRasterFilter();
 			delete face_raster_filter;
 
+			volatile auto *farthest_point_sampling_filter = new pdal::FarthestPointSamplingFilter();
+			delete farthest_point_sampling_filter;
+
 			volatile auto *ferry_filter = new pdal::FerryFilter();
 			delete ferry_filter;
+
+			volatile auto *geom_distance_filter = new pdal::GeomDistanceFilter();
+			delete geom_distance_filter;
+
+			volatile auto *georeference_filter = new pdal::GeoreferenceFilter();
+			delete georeference_filter;
+
+			volatile auto *grid_decimation_filter = new pdal::GridDecimationFilter();
+			delete grid_decimation_filter;
+
+			volatile auto *group_by_filter = new pdal::GroupByFilter();
+			delete group_by_filter;
 
 			volatile auto *h3_filter = new pdal::H3Filter();
 			delete h3_filter;
@@ -167,8 +221,17 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 			volatile auto *hag_delaunay_filter = new pdal::HagDelaunayFilter();
 			delete hag_delaunay_filter;
 
+			volatile auto *hag_dem_filter = new pdal::HagDemFilter();
+			delete hag_dem_filter;
+
+			volatile auto *hag_nn_filter = new pdal::HagNnFilter();
+			delete hag_nn_filter;
+
 			volatile auto *head_filter = new pdal::HeadFilter();
 			delete head_filter;
+
+			volatile auto *hex_bin_filter = new pdal::HexBin();
+			delete hex_bin_filter;
 
 			volatile auto *info_filter = new pdal::InfoFilter();
 			delete info_filter;
@@ -176,8 +239,23 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 			volatile auto *iqr_filter = new pdal::IQRFilter();
 			delete iqr_filter;
 
+			volatile auto *label_duplicates_filter = new pdal::LabelDuplicatesFilter();
+			delete label_duplicates_filter;
+
+			volatile auto *li_tree_filter = new pdal::LiTreeFilter();
+			delete li_tree_filter;
+
+			volatile auto *lloyd_kmeans_filter = new pdal::LloydKMeansFilter();
+			delete lloyd_kmeans_filter;
+
 			volatile auto *locate_filter = new pdal::LocateFilter();
 			delete locate_filter;
+
+			volatile auto *lof_filter = new pdal::LOFFilter();
+			delete lof_filter;
+
+			volatile auto *m3c2_filter = new pdal::M3C2Filter();
+			delete m3c2_filter;
 
 			volatile auto *mad_filter = new pdal::MADFilter();
 			delete mad_filter;
@@ -185,11 +263,26 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 			volatile auto *merge_filter = new pdal::MergeFilter();
 			delete merge_filter;
 
+			volatile auto *miniball_filter = new pdal::MiniballFilter();
+			delete miniball_filter;
+
+			volatile auto *mongo_expression_filter = new pdal::MongoExpressionFilter();
+			delete mongo_expression_filter;
+
 			volatile auto *morton_order_filter = new pdal::MortonOrderFilter();
 			delete morton_order_filter;
 
+			volatile auto *neighbor_classifier_filter = new pdal::NeighborClassifierFilter();
+			delete neighbor_classifier_filter;
+
+			volatile auto *nn_distance_filter = new pdal::NNDistanceFilter();
+			delete nn_distance_filter;
+
 			volatile auto *normal_filter = new pdal::NormalFilter();
 			delete normal_filter;
+
+			volatile auto *optimal_neighborhood_filter = new pdal::OptimalNeighborhood();
+			delete optimal_neighborhood_filter;
 
 			volatile auto *outlier_filter = new pdal::OutlierFilter();
 			delete outlier_filter;
@@ -197,8 +290,23 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 			volatile auto *overlay_filter = new pdal::OverlayFilter();
 			delete overlay_filter;
 
+			volatile auto *plane_fit_filter = new pdal::PlaneFitFilter();
+			delete plane_fit_filter;
+
 			volatile auto *pmf_filter = new pdal::PMFFilter();
 			delete pmf_filter;
+
+			volatile auto *poisson_filter = new pdal::PoissonFilter();
+			delete poisson_filter;
+
+			volatile auto *proj_pipeline_filter = new pdal::ProjPipelineFilter();
+			delete proj_pipeline_filter;
+
+			volatile auto *radial_density_filter = new pdal::RadialDensityFilter();
+			delete radial_density_filter;
+
+			volatile auto *radius_assign_filter = new pdal::RadiusAssignFilter();
+			delete radius_assign_filter;
 
 			volatile auto *randomize_filter = new pdal::RandomizeFilter();
 			delete randomize_filter;
@@ -218,6 +326,9 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 			volatile auto *sample_filter = new pdal::SampleFilter();
 			delete sample_filter;
 
+			volatile auto *separate_scan_line_filter = new pdal::SeparateScanLineFilter();
+			delete separate_scan_line_filter;
+
 			volatile auto *shell_filter = new pdal::ShellFilter();
 			delete shell_filter;
 
@@ -230,6 +341,9 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 			volatile auto *sort_filter = new pdal::SortFilter();
 			delete sort_filter;
 
+			volatile auto *sparse_surface_filter = new pdal::SparseSurfaceFilter();
+			delete sparse_surface_filter;
+
 			volatile auto *splitter_filter = new pdal::SplitterFilter();
 			delete splitter_filter;
 
@@ -238,6 +352,9 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 
 			volatile auto *stream_callback_filter = new pdal::StreamCallbackFilter();
 			delete stream_callback_filter;
+
+			volatile auto *supervoxel_filter = new pdal::SupervoxelFilter();
+			delete supervoxel_filter;
 
 			volatile auto *tail_filter = new pdal::TailFilter();
 			delete tail_filter;
@@ -250,6 +367,12 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 
 			volatile auto *voxel_centroid_nn_filter = new pdal::VoxelCentroidNearestNeighborFilter();
 			delete voxel_centroid_nn_filter;
+
+			volatile auto *voxel_downsize_filter = new pdal::VoxelDownsizeFilter();
+			delete voxel_downsize_filter;
+
+			volatile auto *zsmooth_filter = new pdal::ZsmoothFilter();
+			delete zsmooth_filter;
 
 			// ==========================================================================================================
 			// Readers & Writers
