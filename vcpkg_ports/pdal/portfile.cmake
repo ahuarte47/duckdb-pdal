@@ -15,8 +15,24 @@ vcpkg_from_github(
         find-library-suffix.diff
         no-rpath.patch
         rapidxml.diff
-        arbiter-constexpr-tables.diff
 )
+
+set(ARBITER_SOURCE "${SOURCE_PATH}/vendor/arbiter/arbiter.cpp")
+file(READ "${ARBITER_SOURCE}" ARBITER_CONTENT)
+set(ARBITER_OLD [=[
+    const std::string base64Vals(
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
+
+    const std::string hexVals("0123456789abcdef");]=])
+string(FIND "${ARBITER_CONTENT}" "${ARBITER_OLD}" ARBITER_OLD_POSITION)
+if(ARBITER_OLD_POSITION EQUAL -1)
+    message(FATAL_ERROR "Could not locate Arbiter's base64/hex tables in ${ARBITER_SOURCE}")
+endif()
+set(ARBITER_NEW [=[
+    constexpr char base64Vals[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    constexpr char hexVals[] = "0123456789abcdef";]=])
+string(REPLACE "${ARBITER_OLD}" "${ARBITER_NEW}" ARBITER_CONTENT "${ARBITER_CONTENT}")
+file(WRITE "${ARBITER_SOURCE}" "${ARBITER_CONTENT}")
 
 # Build PDAL and its bundled libraries as static libraries.
 file(READ "${SOURCE_PATH}/cmake/libraries.cmake" LIBS_CONTENT)
