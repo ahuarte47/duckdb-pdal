@@ -22,8 +22,8 @@ def find_cdb():
     return None
 
 
-def diagnose(binary):
-    print("\n=== Windows crash diagnostic: test/sql/pdal.test ===", flush=True)
+def diagnose(binary, test_file):
+    print(f"\n=== Windows crash diagnostic: {test_file} ===", flush=True)
     pdbs = sorted(Path("build/release").rglob("*.pdb"))
     print(f"Local PDB files: {len(pdbs)}", flush=True)
     for pdb in pdbs:
@@ -37,7 +37,7 @@ def diagnose(binary):
             'sxe -c ".echo === FIRST CHANCE ACCESS VIOLATION ===; '
             '.ecxr; !analyze -v; .exr -1; r; kv; lm; q" av; g'
         )
-        command = [cdb, "-lines", "-c", commands, binary, "test/sql/pdal.test"]
+        command = [cdb, "-lines", "-c", commands, binary, test_file]
     else:
         print("cdb.exe not found in PATH or Windows Kits; trying gdb.", flush=True)
         gdb = shutil.which("gdb.exe") or shutil.which("gdb")
@@ -59,7 +59,7 @@ def diagnose(binary):
             "info sharedlibrary",
             "--args",
             binary,
-            "test/sql/pdal.test",
+            test_file,
         ]
 
     print(f"Debugger: {command[0]}", flush=True)
@@ -80,7 +80,12 @@ def main():
     runner = Path("duckdb/scripts/ci/run_tests.py")
     result = subprocess.run([sys.executable, str(runner), *sys.argv[1:]], check=False)
     if result.returncode and sys.platform == "win32":
-        diagnose(sys.argv[1])
+        for test_file in (
+            "test/sql/pdal.test",
+            "test/sql/pdal_raster.test",
+            "test/sql/pdal_read_where.test",
+        ):
+            diagnose(sys.argv[1], test_file)
     return result.returncode
 
 
