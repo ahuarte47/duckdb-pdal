@@ -40,16 +40,6 @@ index 1ab7ea7..2219211 100644
  if (ZSTD_FOUND)
      target_link_libraries(${PDAL_LIB_NAME}
          PRIVATE
-@@ -304,9 +306,9 @@ target_include_directories(${PDAL_LIB_NAME}
-     INTERFACE
-         $<INSTALL_INTERFACE:include>)
- 
- target_compile_definitions(${PDAL_LIB_NAME}
-     PRIVATE
-     H3_PREFIX=PDALH3)
- 
- if(WIN32)
-     target_compile_definitions(${PDAL_LIB_NAME}
 diff --git a/cmake/schema-validator.cmake b/cmake/schema-validator.cmake
 index 1f9f996..aeb598c 100644
 --- a/cmake/schema-validator.cmake
