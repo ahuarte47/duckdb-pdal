@@ -35,7 +35,7 @@ def diagnose(binary):
     if cdb:
         commands = (
             'sxe -c ".echo === FIRST CHANCE ACCESS VIOLATION ===; '
-            '.exr -1; r; kv; lm; q" av; g'
+            '.ecxr; !analyze -v; .exr -1; r; kv; lm; q" av; g'
         )
         command = [cdb, "-lines", "-c", commands, binary, "test/sql/pdal.test"]
     else:

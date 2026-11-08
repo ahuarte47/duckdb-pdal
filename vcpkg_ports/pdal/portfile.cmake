@@ -15,6 +15,7 @@ vcpkg_from_github(
         find-library-suffix.diff
         no-rpath.patch
         rapidxml.diff
+        arbiter-constexpr-tables.diff
 )
 
 # Build PDAL and its bundled libraries as static libraries.
