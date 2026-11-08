@@ -1,5 +1,6 @@
 #include "pdal_drivers.hpp"
 #include "function_builder.hpp"
+#include "pdal_trace.hpp"
 
 // DuckDB
 #include "duckdb/main/database.hpp"
@@ -31,6 +32,7 @@ struct PDAL_Drivers {
 
 	static unique_ptr<FunctionData> Bind(ClientContext &context, TableFunctionBindInput &input,
 	                                     vector<LogicalType> &return_types, vector<Identifier> &names) {
+		PdalTrace::SetCheckpoint("PDAL_Drivers bind: loadAll");
 		names.emplace_back("name");
 		return_types.push_back(LogicalType::VARCHAR);
 		names.emplace_back("description");
@@ -39,8 +41,10 @@ struct PDAL_Drivers {
 		return_types.push_back(LogicalType::VARCHAR);
 
 		pdal::PluginManager<pdal::Stage>::loadAll();
+		PdalTrace::SetCheckpoint("PDAL_Drivers bind: enumerate names");
 		std::vector<std::string> pdal_stages = pdal::PluginManager<pdal::Stage>::names();
 
+		PdalTrace::SetCheckpoint("PDAL_Drivers bind: complete");
 		return make_uniq_base<FunctionData, BindData>(pdal_stages.size());
 	}
 
@@ -63,6 +67,7 @@ struct PDAL_Drivers {
 	//------------------------------------------------------------------------------------------------------------------
 
 	static void Execute(ClientContext &context, TableFunctionInput &input, DataChunk &output) {
+		PdalTrace::SetCheckpoint("PDAL_Drivers execute: enumerate names");
 		auto &state = input.global_state->Cast<State>();
 		auto &bind_data = input.bind_data->Cast<BindData>();
 
@@ -73,6 +78,7 @@ struct PDAL_Drivers {
 
 		for (; state.current_idx < next_idx; state.current_idx++) {
 			std::string name = pdal_stages[state.current_idx];
+			PdalTrace::SetCheckpoint("PDAL_Drivers execute: describe stage");
 			std::string description = pdal::PluginManager<pdal::Stage>::description(name);
 
 			output.data[0].SetValue(count, name);
@@ -88,6 +94,7 @@ struct PDAL_Drivers {
 			count++;
 		}
 		output.SetChildCardinality(count);
+		PdalTrace::SetCheckpoint("PDAL_Drivers execute: complete");
 	}
 
 	//------------------------------------------------------------------------------------------------------------------

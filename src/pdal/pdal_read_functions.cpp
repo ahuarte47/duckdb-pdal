@@ -1,6 +1,7 @@
 #include "pdal_read_functions.hpp"
 #include "function_builder.hpp"
 #include "filter_encoder.hpp"
+#include "pdal_trace.hpp"
 
 // DuckDB
 #include "duckdb/main/database.hpp"
@@ -196,6 +197,7 @@ struct PDAL_Info {
 	//------------------------------------------------------------------------------------------------------------------
 
 	static void Execute(ClientContext &context, TableFunctionInput &input, DataChunk &output) {
+		PdalTrace::SetCheckpoint("PDAL_Info execute");
 		auto &bind_data = input.bind_data->Cast<BindData>();
 		auto &state = input.global_state->Cast<State>();
 
@@ -253,10 +255,12 @@ struct PDAL_Info {
 				// Get the header data from the file
 
 				if ((file_ext == "las" || file_ext == "laz") && !StringUtil::EndsWith(lower_path, ".copc.laz")) {
+					PdalTrace::SetCheckpoint("PDAL_Info: prepare LAS reader");
 					pdal::LasReader reader;
 					reader.setOptions(read_options);
 
 					reader.prepare(table);
+					PdalTrace::SetCheckpoint("PDAL_Info: read LAS metadata");
 					info = GetQuickInfo(table, &reader);
 					const pdal::LasHeader &header = reader.header();
 
@@ -296,13 +300,16 @@ struct PDAL_Info {
 						throw InvalidInputException("File format not supported: %s", file.path);
 					}
 
+					PdalTrace::SetCheckpoint("PDAL_Info: create non-LAS reader");
 					pdal::Stage *reader = stage_factory.createStage(driver);
 					if (!reader) {
 						throw InvalidInputException("Driver not found for file: %s", file.path);
 					}
 					reader->setOptions(read_options);
 
+					PdalTrace::SetCheckpoint("PDAL_Info: prepare non-LAS reader");
 					reader->prepare(table);
+					PdalTrace::SetCheckpoint("PDAL_Info: preview non-LAS reader");
 					info = reader->preview();
 
 					stage_factory.destroyStage(reader);
@@ -394,6 +401,7 @@ struct PDAL_Info {
 					dimensions.push_back(Value::STRUCT(struct_entry));
 				}
 				output.data[attr_idx++].SetValue(out_idx, Value::LIST(PDAL_DIMENSION_TYPE(), std::move(dimensions)));
+				PdalTrace::SetCheckpoint("PDAL_Info: output row complete");
 
 			} catch (...) {
 				// Just skip anything we cant open
@@ -472,6 +480,7 @@ struct PDAL_Read {
 
 	static unique_ptr<FunctionData> Bind(ClientContext &context, TableFunctionBindInput &input,
 	                                     vector<LogicalType> &return_types, vector<Identifier> &names) {
+		PdalTrace::SetCheckpoint("PDAL_Read bind: infer reader");
 		auto file_name = StringValue::Get(input.inputs[0]);
 		auto &fs = FileSystem::GetFileSystem(context);
 
@@ -502,11 +511,13 @@ struct PDAL_Read {
 		pdal::point_count_t point_count = 0;
 
 		if ((file_ext == "las" || file_ext == "laz") && !StringUtil::EndsWith(lower_path, ".copc.laz")) {
+			PdalTrace::SetCheckpoint("PDAL_Read bind: prepare LAS reader");
 			pdal::LasReader reader;
 			reader.setOptions(reader_options);
 
 			pdal::FixedPointTable table(5);
 			reader.prepare(table);
+			PdalTrace::SetCheckpoint("PDAL_Read bind: extract LAS layout");
 
 			pdal::PointLayoutPtr layout = table.layout();
 			PdalUtils::ExtractLayout(layout, names, return_types);
@@ -515,6 +526,7 @@ struct PDAL_Read {
 			point_count = header.pointCount();
 		} else {
 			pdal::StageFactory stage_factory;
+			PdalTrace::SetCheckpoint("PDAL_Read bind: create non-LAS reader");
 			pdal::Stage *reader = stage_factory.createStage(driver);
 
 			if (!reader) {
@@ -523,13 +535,16 @@ struct PDAL_Read {
 
 			reader->setOptions(reader_options);
 
+			PdalTrace::SetCheckpoint("PDAL_Read bind: prepare non-LAS reader");
 			std::unique_ptr<pdal::PointTable> table = std::make_unique<pdal::PointTable>();
 			reader->prepare(*table);
 
+			PdalTrace::SetCheckpoint("PDAL_Read bind: preview non-LAS reader");
 			pdal::PointLayoutPtr layout = table->layout();
 			PdalUtils::ExtractLayout(layout, names, return_types);
 
 			point_count = reader->preview().m_pointCount;
+			PdalTrace::SetCheckpoint("PDAL_Read bind: destroy non-LAS reader");
 			stage_factory.destroyStage(reader);
 		}
 
@@ -545,6 +560,7 @@ struct PDAL_Read {
 		bind_data->column_types = return_types;
 		bind_data->point_count = point_count;
 
+		PdalTrace::SetCheckpoint("PDAL_Read bind: complete");
 		return std::move(bind_data);
 	};
 
@@ -561,6 +577,7 @@ struct PDAL_Read {
 	};
 
 	static unique_ptr<GlobalTableFunctionState> InitGlobal(ClientContext &context, TableFunctionInitInput &input) {
+		PdalTrace::SetCheckpoint("PDAL_Read init");
 		auto &bind_data = (BindData &)*input.bind_data;
 
 		const auto &file_name = bind_data.file_name;
@@ -577,6 +594,7 @@ struct PDAL_Read {
 			pdal::StageFactory stage_factory;
 			pdal::Stage *reader = stage_factory.createStage(driver);
 
+			PdalTrace::SetCheckpoint("PDAL_Read init: prepare reader");
 			if (bind_data.point_limit > 0) {
 				pdal::Options temp_options(reader_options);
 				temp_options.add("count", bind_data.point_limit);
@@ -587,7 +605,9 @@ struct PDAL_Read {
 			std::unique_ptr<pdal::PointTable> table = std::make_unique<pdal::PointTable>();
 			reader->prepare(*table);
 
+			PdalTrace::SetCheckpoint("PDAL_Read init: execute reader");
 			pdal::PointViewSet views = reader->execute(*table);
+			PdalTrace::SetCheckpoint("PDAL_Read init: reader execute complete");
 			bind_data.table = std::move(table);
 			bind_data.views = std::move(views);
 		} else {
@@ -603,6 +623,7 @@ struct PDAL_Read {
 
 			std::unique_ptr<pdal::PipelineManager> pipeline = std::make_unique<pdal::PipelineManager>();
 			std::stringstream ssin("[" + the_pipeline + "]");
+			PdalTrace::SetCheckpoint("PDAL_Read init: parse expression pipeline");
 			pipeline->readPipeline(ssin);
 
 			std::vector<pdal::Stage *> roots = pipeline->roots();
@@ -612,8 +633,10 @@ struct PDAL_Read {
 
 			pdal::Stage *reader = &pipeline->makeReader(file_name, driver, reader_options);
 			roots[0]->setInput(*reader);
+			PdalTrace::SetCheckpoint("PDAL_Read init: execute expression pipeline");
 			pdal::point_count_t point_count = pipeline->execute();
 
+			PdalTrace::SetCheckpoint("PDAL_Read init: expression pipeline complete");
 			bind_data.pipeline = std::move(pipeline);
 			bind_data.point_count = point_count;
 		}
@@ -634,6 +657,7 @@ struct PDAL_Read {
 	//------------------------------------------------------------------------------------------------------------------
 
 	static void Execute(ClientContext &context, TableFunctionInput &input, DataChunk &output) {
+		PdalTrace::SetCheckpoint("PDAL_Read execute: extract chunk");
 		auto &bind_data = (BindData &)*input.bind_data;
 		auto &gstate = input.global_state->Cast<GlobalState>();
 
@@ -658,6 +682,7 @@ struct PDAL_Read {
 			pdal::PointViewPtr view = *(bind_data.pipeline->views().begin());
 			PdalUtils::ExtractDataChunk(view, point_start, output_size, gstate.column_ids, output);
 		}
+		PdalTrace::SetCheckpoint("PDAL_Read execute: chunk extracted");
 
 		// Update the point index
 		gstate.point_idx += output_size;

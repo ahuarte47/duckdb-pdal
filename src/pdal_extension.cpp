@@ -12,18 +12,23 @@
 #include "pdal/pdal_read_functions.hpp"
 #include "pdal/pdal_pipeline_functions.hpp"
 #include "pdal/pdal_write_functions.hpp"
+#include "pdal/pdal_trace.hpp"
 
 namespace duckdb {
 
 static void LoadInternal(ExtensionLoader &loader) {
+	PdalTrace::Install();
+	PdalTrace::SetCheckpoint("extension registration");
 	// Register static PDAL plugins first
 	PdalStaticRegistry::Register(loader);
+	PdalTrace::SetCheckpoint("PDAL function registration");
 
 	// Register functions
 	PdalDrivers::Register(loader);
 	PdalReadFunctions::Register(loader);
 	PdalPipelineFunctions::Register(loader);
 	PdalWriteFunctions::Register(loader);
+	PdalTrace::SetCheckpoint("extension loaded");
 }
 
 void PdalExtension::Load(ExtensionLoader &loader) {
