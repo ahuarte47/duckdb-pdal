@@ -1,11 +1,10 @@
 diff --git a/vendor/arbiter/arbiter.cpp b/vendor/arbiter/arbiter.cpp
 --- a/vendor/arbiter/arbiter.cpp
 +++ b/vendor/arbiter/arbiter.cpp
-@@ -5611,5 +5611,3 @@
+@@ -5611,4 +5611,2 @@
 -    const std::string base64Vals(
 -        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
 -
 -    const std::string hexVals("0123456789abcdef");
 +    constexpr char base64Vals[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 +    constexpr char hexVals[] = "0123456789abcdef";
-      // Return the position of chr within base64_encode()
