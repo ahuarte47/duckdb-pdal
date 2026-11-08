@@ -179,8 +179,8 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 			volatile auto *face_raster_filter = new pdal::FaceRasterFilter();
 			delete face_raster_filter;
 
-			// Temporarily disabled: volatile auto *farthest_point_sampling_filter = new pdal::FarthestPointSamplingFilter();
-			// Temporarily disabled: delete farthest_point_sampling_filter;
+			// Temporarily disabled: volatile auto *farthest_point_sampling_filter = new
+			// pdal::FarthestPointSamplingFilter(); Temporarily disabled: delete farthest_point_sampling_filter;
 			volatile auto *ferry_filter = new pdal::FerryFilter();
 			delete ferry_filter;
 
@@ -291,10 +291,10 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 
 			// Temporarily disabled: volatile auto *transformation_filter = new pdal::TransformationFilter();
 			// Temporarily disabled: delete transformation_filter;
-			// Temporarily disabled: volatile auto *voxel_center_nn_filter = new pdal::VoxelCenterNearestNeighborFilter();
-			// Temporarily disabled: delete voxel_center_nn_filter;
-			// Temporarily disabled: volatile auto *voxel_centroid_nn_filter = new pdal::VoxelCentroidNearestNeighborFilter();
-			// Temporarily disabled: delete voxel_centroid_nn_filter;
+			// Temporarily disabled: volatile auto *voxel_center_nn_filter = new
+			// pdal::VoxelCenterNearestNeighborFilter(); Temporarily disabled: delete voxel_center_nn_filter;
+			// Temporarily disabled: volatile auto *voxel_centroid_nn_filter = new
+			// pdal::VoxelCentroidNearestNeighborFilter(); Temporarily disabled: delete voxel_centroid_nn_filter;
 			// Temporarily disabled: volatile auto *voxel_downsize_filter = new pdal::VoxelDownsizeFilter();
 			// Temporarily disabled: delete voxel_downsize_filter;
 			// Temporarily disabled: volatile auto *zsmooth_filter = new pdal::ZsmoothFilter();
