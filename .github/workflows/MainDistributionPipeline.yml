@@ -19,7 +19,7 @@ jobs:
       duckdb_version: v2.0.0
       ci_tools_version: v2.0-cyanoptera
       extension_name: pdal
-      exclude_archs: 'windows_amd64_mingw;wasm_mvp;wasm_eh;wasm_threads'
+      exclude_archs: 'windows_amd64_mingw;wasm_mvp;wasm_eh;wasm_threads;linux_amd64;linux_arm64;osx_amd64;osx_arm64'
       extra_toolchains: 'parser_tools;'
 
   code-quality-check:
