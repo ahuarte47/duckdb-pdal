@@ -15,7 +15,6 @@ find_package(utf8cpp CONFIG REQUIRED)
 find_package(nanoflann CONFIG REQUIRED)
 find_package(LibXml2 CONFIG REQUIRED)
 find_package(GDAL CONFIG REQUIRED)
-find_package(h3 CONFIG REQUIRED)
 find_package(PDAL CONFIG REQUIRED)
 
 if(TARGET PDAL::pdalcpp)

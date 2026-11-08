@@ -1,7 +1,7 @@
 {
   "name": "pdal",
   "version": "2.10.1",
-  "port-version": 1,
+  "port-version": 2,
   "description": "PDAL - Point Data Abstraction Library is a library for manipulating point cloud data.",
   "homepage": "https://pdal.org/",
   "license": null,
@@ -15,7 +15,6 @@
       "name": "gdal",
       "default-features": false
     },
-    "h3",
     "json-schema-validator",
     "libgeotiff",
     {

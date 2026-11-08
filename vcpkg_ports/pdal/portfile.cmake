@@ -27,7 +27,7 @@ string(REPLACE "    endif()\nendmacro(PDAL_ADD_FREE_LIBRARY)" "    endif()\n    
 file(WRITE "${SOURCE_PATH}/cmake/macros.cmake" "${MACROS_CONTENT}")
 
 file(READ "${SOURCE_PATH}/CMakeLists.txt" CMAKE_CONTENT)
-string(REPLACE "export(\n    TARGETS\n        \${PDAL_LIB_NAME}\n    FILE\n        \"\${PDAL_BINARY_DIR}/PDALTargets.cmake\")" "export(\n    TARGETS\n        \${PDAL_LIB_NAME}\n        \${PDAL_ARBITER_LIB_NAME}\n                \${PDAL_KAZHDAN_LIB_NAME}\n        \${PDAL_LEPCC_LIB_NAME}\n        \${PDAL_LAZPERF_LIB_NAME}\n    FILE\n        \"\${PDAL_BINARY_DIR}/PDALTargets.cmake\")" CMAKE_CONTENT "${CMAKE_CONTENT}")
+string(REPLACE "export(\n    TARGETS\n        \${PDAL_LIB_NAME}\n    FILE\n        \"\${PDAL_BINARY_DIR}/PDALTargets.cmake\")" "export(\n    TARGETS\n        \${PDAL_LIB_NAME}\n        \${PDAL_ARBITER_LIB_NAME}\n        \${PDAL_H3_LIB_NAME}\n                \${PDAL_KAZHDAN_LIB_NAME}\n        \${PDAL_LEPCC_LIB_NAME}\n        \${PDAL_LAZPERF_LIB_NAME}\n    FILE\n        \"\${PDAL_BINARY_DIR}/PDALTargets.cmake\")" CMAKE_CONTENT "${CMAKE_CONTENT}")
 file(WRITE "${SOURCE_PATH}/CMakeLists.txt" "${CMAKE_CONTENT}")
 
 file(REMOVE_RECURSE
@@ -37,14 +37,11 @@ file(REMOVE_RECURSE
     "${SOURCE_PATH}/cmake/modules/FindZSTD.cmake"
     "${SOURCE_PATH}/plugins/e57/libE57Format"
     "${SOURCE_PATH}/vendor/eigen"
-    "${SOURCE_PATH}/vendor/h3"
     "${SOURCE_PATH}/vendor/nanoflann"
     "${SOURCE_PATH}/vendor/nlohmann"
     "${SOURCE_PATH}/vendor/schema-validator"
     "${SOURCE_PATH}/vendor/utfcpp"
 )
-# PDAL includes "h3api.h", and some calls are decorated with PDALH3
-file(COPY "${CURRENT_PORT_DIR}/h3api.h" DESTINATION "${SOURCE_PATH}")
 # PDAL uses namespace 'NL' for nlohmann
 file(COPY "${CURRENT_INSTALLED_DIR}/include/nlohmann" DESTINATION "${SOURCE_PATH}/vendor/nlohmann/")
 file(APPEND "${SOURCE_PATH}/vendor/nlohmann/nlohmann/json.hpp" "\nnamespace NL = nlohmann;\n")

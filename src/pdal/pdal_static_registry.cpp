@@ -7,84 +7,83 @@
 // We need to create dummy instances of all PDAL plugins in order to force
 // linkage when building a static library.
 // Filters
-#include <pdal/filters/ApproximateCoplanarFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/ApproximateCoplanarFilter.hpp>
 #include <pdal/filters/AssignFilter.hpp>
-#include <pdal/filters/ChipperFilter.hpp>
-#include <pdal/filters/ClusterFilter.hpp>
-#include <pdal/filters/ColorinterpFilter.hpp>
-#include <pdal/filters/ColorizationFilter.hpp>
-#include <pdal/filters/CovarianceFeaturesFilter.hpp>
-#include <pdal/filters/CropFilter.hpp>
-#include <pdal/filters/CSFilter.hpp>
-#include <pdal/filters/DBSCANFilter.hpp>
-#include <pdal/filters/DecimationFilter.hpp>
-#include <pdal/filters/DelaunayFilter.hpp>
-#include <pdal/filters/DEMFilter.hpp>
-#include <pdal/filters/DividerFilter.hpp>
-#include <pdal/filters/ELMFilter.hpp>
-#include <pdal/filters/EstimateRankFilter.hpp>
-#include <pdal/filters/ExpressionFilter.hpp>
-#include <pdal/filters/ExpressionStatsFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/ChipperFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/ClusterFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/ColorinterpFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/ColorizationFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/CovarianceFeaturesFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/CropFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/CSFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/DBSCANFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/DecimationFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/DelaunayFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/DEMFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/DividerFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/ELMFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/EstimateRankFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/ExpressionFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/ExpressionStatsFilter.hpp>
 #include <pdal/filters/FaceRasterFilter.hpp>
-#include <pdal/filters/FarthestPointSamplingFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/FarthestPointSamplingFilter.hpp>
 #include <pdal/filters/FerryFilter.hpp>
-#include <pdal/filters/GeomDistanceFilter.hpp>
-#include <pdal/filters/GeoreferenceFilter.hpp>
-#include <pdal/filters/GridDecimationFilter.hpp>
-#include <pdal/filters/GroupByFilter.hpp>
-#include <pdal/filters/H3Filter.hpp>
+// Temporarily disabled: #include <pdal/filters/GeomDistanceFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/GeoreferenceFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/GridDecimationFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/GroupByFilter.hpp>
 #include <pdal/filters/HagDelaunayFilter.hpp>
-#include <pdal/filters/HagDemFilter.hpp>
-#include <pdal/filters/HagNnFilter.hpp>
-#include <pdal/filters/HeadFilter.hpp>
-#include <pdal/filters/HexBinFilter.hpp>
-#include <pdal/filters/InfoFilter.hpp>
-#include <pdal/filters/IQRFilter.hpp>
-#include <pdal/filters/LabelDuplicatesFilter.hpp>
-#include <pdal/filters/LiTreeFilter.hpp>
-#include <pdal/filters/LloydKMeansFilter.hpp>
-#include <pdal/filters/LocateFilter.hpp>
-#include <pdal/filters/LOFFilter.hpp>
-#include <pdal/filters/M3C2Filter.hpp>
-#include <pdal/filters/MADFilter.hpp>
-#include <pdal/filters/MergeFilter.hpp>
-#include <pdal/filters/MiniballFilter.hpp>
-#include <pdal/filters/MongoExpressionFilter.hpp>
-#include <pdal/filters/MortonOrderFilter.hpp>
-#include <pdal/filters/NeighborClassifierFilter.hpp>
-#include <pdal/filters/NNDistanceFilter.hpp>
-#include <pdal/filters/NormalFilter.hpp>
-#include <pdal/filters/OptimalNeighborhoodFilter.hpp>
-#include <pdal/filters/OutlierFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/HagDemFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/HagNnFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/HeadFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/HexBinFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/InfoFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/IQRFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/LabelDuplicatesFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/LiTreeFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/LloydKMeansFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/LocateFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/LOFFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/M3C2Filter.hpp>
+// Temporarily disabled: #include <pdal/filters/MADFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/MergeFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/MiniballFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/MongoExpressionFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/MortonOrderFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/NeighborClassifierFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/NNDistanceFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/NormalFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/OptimalNeighborhoodFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/OutlierFilter.hpp>
 #include <pdal/filters/OverlayFilter.hpp>
-#include <pdal/filters/PlaneFitFilter.hpp>
-#include <pdal/filters/PMFFilter.hpp>
-#include <pdal/filters/PoissonFilter.hpp>
-#include <pdal/filters/ProjPipelineFilter.hpp>
-#include <pdal/filters/RadialDensityFilter.hpp>
-#include <pdal/filters/RadiusAssignFilter.hpp>
-#include <pdal/filters/RandomizeFilter.hpp>
-#include <pdal/filters/RangeFilter.hpp>
-#include <pdal/filters/ReciprocityFilter.hpp>
-#include <pdal/filters/ReprojectionFilter.hpp>
-#include <pdal/filters/ReturnsFilter.hpp>
-#include <pdal/filters/SampleFilter.hpp>
-#include <pdal/filters/SeparateScanLineFilter.hpp>
-#include <pdal/filters/ShellFilter.hpp>
-#include <pdal/filters/SkewnessBalancingFilter.hpp>
-#include <pdal/filters/SMRFilter.hpp>
-#include <pdal/filters/SortFilter.hpp>
-#include <pdal/filters/SparseSurfaceFilter.hpp>
-#include <pdal/filters/SplitterFilter.hpp>
-#include <pdal/filters/StatsFilter.hpp>
-#include <pdal/filters/StreamCallbackFilter.hpp>
-#include <pdal/filters/SupervoxelFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/PlaneFitFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/PMFFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/PoissonFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/ProjPipelineFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/RadialDensityFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/RadiusAssignFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/RandomizeFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/RangeFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/ReciprocityFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/ReprojectionFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/ReturnsFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/SampleFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/SeparateScanLineFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/ShellFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/SkewnessBalancingFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/SMRFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/SortFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/SparseSurfaceFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/SplitterFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/StatsFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/StreamCallbackFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/SupervoxelFilter.hpp>
 #include <pdal/filters/TailFilter.hpp>
-#include <pdal/filters/TransformationFilter.hpp>
-#include <pdal/filters/VoxelCenterNearestNeighborFilter.hpp>
-#include <pdal/filters/VoxelCentroidNearestNeighborFilter.hpp>
-#include <pdal/filters/VoxelDownsizeFilter.hpp>
-#include <pdal/filters/ZsmoothFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/TransformationFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/VoxelCenterNearestNeighborFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/VoxelCentroidNearestNeighborFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/VoxelDownsizeFilter.hpp>
+// Temporarily disabled: #include <pdal/filters/ZsmoothFilter.hpp>
 // Private types and utilities
 #include <pdal/filters/private/DimRange.hpp>
 #include <pdal/private/gdal/Raster.hpp>
@@ -140,346 +139,238 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 			// Filters
 			// ==========================================================================================================
 
-			volatile auto *approximate_coplanar_filter = new pdal::ApproximateCoplanarFilter();
-			delete approximate_coplanar_filter;
-
+			// Temporarily disabled: volatile auto *approximate_coplanar_filter = new pdal::ApproximateCoplanarFilter();
+			// Temporarily disabled: delete approximate_coplanar_filter;
 			volatile auto *assign_filter = new pdal::AssignFilter();
 			delete assign_filter;
 
-			volatile auto *chipper_filter = new pdal::ChipperFilter();
-			delete chipper_filter;
-
-			volatile auto *cluster_filter = new pdal::ClusterFilter();
-			delete cluster_filter;
-
-			volatile auto *colorinterp_filter = new pdal::ColorinterpFilter();
-			delete colorinterp_filter;
-
-			volatile auto *colorization_filter = new pdal::ColorizationFilter();
-			delete colorization_filter;
-
-			volatile auto *covariance_features_filter = new pdal::CovarianceFeaturesFilter();
-			delete covariance_features_filter;
-
-			volatile auto *crop_filter = new pdal::CropFilter();
-			delete crop_filter;
-
-			volatile auto *cs_filter = new pdal::CSFilter();
-			delete cs_filter;
-
-			volatile auto *dbscan_filter = new pdal::DBSCANFilter();
-			delete dbscan_filter;
-
-			volatile auto *decimation_filter = new pdal::DecimationFilter();
-			delete decimation_filter;
-
-			volatile auto *delaunay_filter = new pdal::DelaunayFilter();
-			delete delaunay_filter;
-
-			volatile auto *dem_filter = new pdal::DEMFilter();
-			delete dem_filter;
-
-			volatile auto *divider_filter = new pdal::DividerFilter();
-			delete divider_filter;
-
-			volatile auto *elm_filter = new pdal::ELMFilter();
-			delete elm_filter;
-
-			volatile auto *estimate_rank_filter = new pdal::EstimateRankFilter();
-			delete estimate_rank_filter;
-
-			volatile auto *expression_filter = new pdal::ExpressionFilter();
-			delete expression_filter;
-
-			volatile auto *expression_stats_filter = new pdal::ExpressionStatsFilter();
-			delete expression_stats_filter;
-
+			// Temporarily disabled: volatile auto *chipper_filter = new pdal::ChipperFilter();
+			// Temporarily disabled: delete chipper_filter;
+			// Temporarily disabled: volatile auto *cluster_filter = new pdal::ClusterFilter();
+			// Temporarily disabled: delete cluster_filter;
+			// Temporarily disabled: volatile auto *colorinterp_filter = new pdal::ColorinterpFilter();
+			// Temporarily disabled: delete colorinterp_filter;
+			// Temporarily disabled: volatile auto *colorization_filter = new pdal::ColorizationFilter();
+			// Temporarily disabled: delete colorization_filter;
+			// Temporarily disabled: volatile auto *covariance_features_filter = new pdal::CovarianceFeaturesFilter();
+			// Temporarily disabled: delete covariance_features_filter;
+			// Temporarily disabled: volatile auto *crop_filter = new pdal::CropFilter();
+			// Temporarily disabled: delete crop_filter;
+			// Temporarily disabled: volatile auto *cs_filter = new pdal::CSFilter();
+			// Temporarily disabled: delete cs_filter;
+			// Temporarily disabled: volatile auto *dbscan_filter = new pdal::DBSCANFilter();
+			// Temporarily disabled: delete dbscan_filter;
+			// Temporarily disabled: volatile auto *decimation_filter = new pdal::DecimationFilter();
+			// Temporarily disabled: delete decimation_filter;
+			// Temporarily disabled: volatile auto *delaunay_filter = new pdal::DelaunayFilter();
+			// Temporarily disabled: delete delaunay_filter;
+			// Temporarily disabled: volatile auto *dem_filter = new pdal::DEMFilter();
+			// Temporarily disabled: delete dem_filter;
+			// Temporarily disabled: volatile auto *divider_filter = new pdal::DividerFilter();
+			// Temporarily disabled: delete divider_filter;
+			// Temporarily disabled: volatile auto *elm_filter = new pdal::ELMFilter();
+			// Temporarily disabled: delete elm_filter;
+			// Temporarily disabled: volatile auto *estimate_rank_filter = new pdal::EstimateRankFilter();
+			// Temporarily disabled: delete estimate_rank_filter;
+			// Temporarily disabled: volatile auto *expression_filter = new pdal::ExpressionFilter();
+			// Temporarily disabled: delete expression_filter;
+			// Temporarily disabled: volatile auto *expression_stats_filter = new pdal::ExpressionStatsFilter();
+			// Temporarily disabled: delete expression_stats_filter;
 			volatile auto *face_raster_filter = new pdal::FaceRasterFilter();
 			delete face_raster_filter;
 
-			volatile auto *farthest_point_sampling_filter = new pdal::FarthestPointSamplingFilter();
-			delete farthest_point_sampling_filter;
-
+			// Temporarily disabled: volatile auto *farthest_point_sampling_filter = new pdal::FarthestPointSamplingFilter();
+			// Temporarily disabled: delete farthest_point_sampling_filter;
 			volatile auto *ferry_filter = new pdal::FerryFilter();
 			delete ferry_filter;
 
-			volatile auto *geom_distance_filter = new pdal::GeomDistanceFilter();
-			delete geom_distance_filter;
-
-			volatile auto *georeference_filter = new pdal::GeoreferenceFilter();
-			delete georeference_filter;
-
-			volatile auto *grid_decimation_filter = new pdal::GridDecimationFilter();
-			delete grid_decimation_filter;
-
-			volatile auto *group_by_filter = new pdal::GroupByFilter();
-			delete group_by_filter;
-
-			volatile auto *h3_filter = new pdal::H3Filter();
-			delete h3_filter;
-
+			// Temporarily disabled: volatile auto *geom_distance_filter = new pdal::GeomDistanceFilter();
+			// Temporarily disabled: delete geom_distance_filter;
+			// Temporarily disabled: volatile auto *georeference_filter = new pdal::GeoreferenceFilter();
+			// Temporarily disabled: delete georeference_filter;
+			// Temporarily disabled: volatile auto *grid_decimation_filter = new pdal::GridDecimationFilter();
+			// Temporarily disabled: delete grid_decimation_filter;
+			// Temporarily disabled: volatile auto *group_by_filter = new pdal::GroupByFilter();
+			// Temporarily disabled: delete group_by_filter;
 			volatile auto *hag_delaunay_filter = new pdal::HagDelaunayFilter();
 			delete hag_delaunay_filter;
 
-			volatile auto *hag_dem_filter = new pdal::HagDemFilter();
-			delete hag_dem_filter;
-
-			volatile auto *hag_nn_filter = new pdal::HagNnFilter();
-			delete hag_nn_filter;
-
-			volatile auto *head_filter = new pdal::HeadFilter();
-			delete head_filter;
-
-			volatile auto *hex_bin_filter = new pdal::HexBin();
-			delete hex_bin_filter;
-
-			volatile auto *info_filter = new pdal::InfoFilter();
-			delete info_filter;
-
-			volatile auto *iqr_filter = new pdal::IQRFilter();
-			delete iqr_filter;
-
-			volatile auto *label_duplicates_filter = new pdal::LabelDuplicatesFilter();
-			delete label_duplicates_filter;
-
-			volatile auto *li_tree_filter = new pdal::LiTreeFilter();
-			delete li_tree_filter;
-
-			volatile auto *lloyd_kmeans_filter = new pdal::LloydKMeansFilter();
-			delete lloyd_kmeans_filter;
-
-			volatile auto *locate_filter = new pdal::LocateFilter();
-			delete locate_filter;
-
-			volatile auto *lof_filter = new pdal::LOFFilter();
-			delete lof_filter;
-
-			volatile auto *m3c2_filter = new pdal::M3C2Filter();
-			delete m3c2_filter;
-
-			volatile auto *mad_filter = new pdal::MADFilter();
-			delete mad_filter;
-
-			volatile auto *merge_filter = new pdal::MergeFilter();
-			delete merge_filter;
-
-			volatile auto *miniball_filter = new pdal::MiniballFilter();
-			delete miniball_filter;
-
-			volatile auto *mongo_expression_filter = new pdal::MongoExpressionFilter();
-			delete mongo_expression_filter;
-
-			volatile auto *morton_order_filter = new pdal::MortonOrderFilter();
-			delete morton_order_filter;
-
-			volatile auto *neighbor_classifier_filter = new pdal::NeighborClassifierFilter();
-			delete neighbor_classifier_filter;
-
-			volatile auto *nn_distance_filter = new pdal::NNDistanceFilter();
-			delete nn_distance_filter;
-
-			volatile auto *normal_filter = new pdal::NormalFilter();
-			delete normal_filter;
-
-			volatile auto *optimal_neighborhood_filter = new pdal::OptimalNeighborhood();
-			delete optimal_neighborhood_filter;
-
-			volatile auto *outlier_filter = new pdal::OutlierFilter();
-			delete outlier_filter;
-
+			// Temporarily disabled: volatile auto *hag_dem_filter = new pdal::HagDemFilter();
+			// Temporarily disabled: delete hag_dem_filter;
+			// Temporarily disabled: volatile auto *hag_nn_filter = new pdal::HagNnFilter();
+			// Temporarily disabled: delete hag_nn_filter;
+			// Temporarily disabled: volatile auto *head_filter = new pdal::HeadFilter();
+			// Temporarily disabled: delete head_filter;
+			// Temporarily disabled: volatile auto *hex_bin_filter = new pdal::HexBin();
+			// Temporarily disabled: delete hex_bin_filter;
+			// Temporarily disabled: volatile auto *info_filter = new pdal::InfoFilter();
+			// Temporarily disabled: delete info_filter;
+			// Temporarily disabled: volatile auto *iqr_filter = new pdal::IQRFilter();
+			// Temporarily disabled: delete iqr_filter;
+			// Temporarily disabled: volatile auto *label_duplicates_filter = new pdal::LabelDuplicatesFilter();
+			// Temporarily disabled: delete label_duplicates_filter;
+			// Temporarily disabled: volatile auto *li_tree_filter = new pdal::LiTreeFilter();
+			// Temporarily disabled: delete li_tree_filter;
+			// Temporarily disabled: volatile auto *lloyd_kmeans_filter = new pdal::LloydKMeansFilter();
+			// Temporarily disabled: delete lloyd_kmeans_filter;
+			// Temporarily disabled: volatile auto *locate_filter = new pdal::LocateFilter();
+			// Temporarily disabled: delete locate_filter;
+			// Temporarily disabled: volatile auto *lof_filter = new pdal::LOFFilter();
+			// Temporarily disabled: delete lof_filter;
+			// Temporarily disabled: volatile auto *m3c2_filter = new pdal::M3C2Filter();
+			// Temporarily disabled: delete m3c2_filter;
+			// Temporarily disabled: volatile auto *mad_filter = new pdal::MADFilter();
+			// Temporarily disabled: delete mad_filter;
+			// Temporarily disabled: volatile auto *merge_filter = new pdal::MergeFilter();
+			// Temporarily disabled: delete merge_filter;
+			// Temporarily disabled: volatile auto *miniball_filter = new pdal::MiniballFilter();
+			// Temporarily disabled: delete miniball_filter;
+			// Temporarily disabled: volatile auto *mongo_expression_filter = new pdal::MongoExpressionFilter();
+			// Temporarily disabled: delete mongo_expression_filter;
+			// Temporarily disabled: volatile auto *morton_order_filter = new pdal::MortonOrderFilter();
+			// Temporarily disabled: delete morton_order_filter;
+			// Temporarily disabled: volatile auto *neighbor_classifier_filter = new pdal::NeighborClassifierFilter();
+			// Temporarily disabled: delete neighbor_classifier_filter;
+			// Temporarily disabled: volatile auto *nn_distance_filter = new pdal::NNDistanceFilter();
+			// Temporarily disabled: delete nn_distance_filter;
+			// Temporarily disabled: volatile auto *normal_filter = new pdal::NormalFilter();
+			// Temporarily disabled: delete normal_filter;
+			// Temporarily disabled: volatile auto *optimal_neighborhood_filter = new pdal::OptimalNeighborhood();
+			// Temporarily disabled: delete optimal_neighborhood_filter;
+			// Temporarily disabled: volatile auto *outlier_filter = new pdal::OutlierFilter();
+			// Temporarily disabled: delete outlier_filter;
 			volatile auto *overlay_filter = new pdal::OverlayFilter();
 			delete overlay_filter;
 
-			volatile auto *plane_fit_filter = new pdal::PlaneFitFilter();
-			delete plane_fit_filter;
-
-			volatile auto *pmf_filter = new pdal::PMFFilter();
-			delete pmf_filter;
-
-			volatile auto *poisson_filter = new pdal::PoissonFilter();
-			delete poisson_filter;
-
-			volatile auto *proj_pipeline_filter = new pdal::ProjPipelineFilter();
-			delete proj_pipeline_filter;
-
-			volatile auto *radial_density_filter = new pdal::RadialDensityFilter();
-			delete radial_density_filter;
-
-			volatile auto *radius_assign_filter = new pdal::RadiusAssignFilter();
-			delete radius_assign_filter;
-
-			volatile auto *randomize_filter = new pdal::RandomizeFilter();
-			delete randomize_filter;
-
-			volatile auto *range_filter = new pdal::RangeFilter();
-			delete range_filter;
-
-			volatile auto *reciprocity_filter = new pdal::ReciprocityFilter();
-			delete reciprocity_filter;
-
-			volatile auto *reprojection_filter = new pdal::ReprojectionFilter();
-			delete reprojection_filter;
-
-			volatile auto *returns_filter = new pdal::ReturnsFilter();
-			delete returns_filter;
-
-			volatile auto *sample_filter = new pdal::SampleFilter();
-			delete sample_filter;
-
-			volatile auto *separate_scan_line_filter = new pdal::SeparateScanLineFilter();
-			delete separate_scan_line_filter;
-
-			volatile auto *shell_filter = new pdal::ShellFilter();
-			delete shell_filter;
-
-			volatile auto *skewness_balancing_filter = new pdal::SkewnessBalancingFilter();
-			delete skewness_balancing_filter;
-
-			volatile auto *smr_filter = new pdal::SMRFilter();
-			delete smr_filter;
-
-			volatile auto *sort_filter = new pdal::SortFilter();
-			delete sort_filter;
-
-			volatile auto *sparse_surface_filter = new pdal::SparseSurfaceFilter();
-			delete sparse_surface_filter;
-
-			volatile auto *splitter_filter = new pdal::SplitterFilter();
-			delete splitter_filter;
-
-			volatile auto *stats_filter = new pdal::StatsFilter();
-			delete stats_filter;
-
-			volatile auto *stream_callback_filter = new pdal::StreamCallbackFilter();
-			delete stream_callback_filter;
-
-			volatile auto *supervoxel_filter = new pdal::SupervoxelFilter();
-			delete supervoxel_filter;
-
+			// Temporarily disabled: volatile auto *plane_fit_filter = new pdal::PlaneFitFilter();
+			// Temporarily disabled: delete plane_fit_filter;
+			// Temporarily disabled: volatile auto *pmf_filter = new pdal::PMFFilter();
+			// Temporarily disabled: delete pmf_filter;
+			// Temporarily disabled: volatile auto *poisson_filter = new pdal::PoissonFilter();
+			// Temporarily disabled: delete poisson_filter;
+			// Temporarily disabled: volatile auto *proj_pipeline_filter = new pdal::ProjPipelineFilter();
+			// Temporarily disabled: delete proj_pipeline_filter;
+			// Temporarily disabled: volatile auto *radial_density_filter = new pdal::RadialDensityFilter();
+			// Temporarily disabled: delete radial_density_filter;
+			// Temporarily disabled: volatile auto *radius_assign_filter = new pdal::RadiusAssignFilter();
+			// Temporarily disabled: delete radius_assign_filter;
+			// Temporarily disabled: volatile auto *randomize_filter = new pdal::RandomizeFilter();
+			// Temporarily disabled: delete randomize_filter;
+			// Temporarily disabled: volatile auto *range_filter = new pdal::RangeFilter();
+			// Temporarily disabled: delete range_filter;
+			// Temporarily disabled: volatile auto *reciprocity_filter = new pdal::ReciprocityFilter();
+			// Temporarily disabled: delete reciprocity_filter;
+			// Temporarily disabled: volatile auto *reprojection_filter = new pdal::ReprojectionFilter();
+			// Temporarily disabled: delete reprojection_filter;
+			// Temporarily disabled: volatile auto *returns_filter = new pdal::ReturnsFilter();
+			// Temporarily disabled: delete returns_filter;
+			// Temporarily disabled: volatile auto *sample_filter = new pdal::SampleFilter();
+			// Temporarily disabled: delete sample_filter;
+			// Temporarily disabled: volatile auto *separate_scan_line_filter = new pdal::SeparateScanLineFilter();
+			// Temporarily disabled: delete separate_scan_line_filter;
+			// Temporarily disabled: volatile auto *shell_filter = new pdal::ShellFilter();
+			// Temporarily disabled: delete shell_filter;
+			// Temporarily disabled: volatile auto *skewness_balancing_filter = new pdal::SkewnessBalancingFilter();
+			// Temporarily disabled: delete skewness_balancing_filter;
+			// Temporarily disabled: volatile auto *smr_filter = new pdal::SMRFilter();
+			// Temporarily disabled: delete smr_filter;
+			// Temporarily disabled: volatile auto *sort_filter = new pdal::SortFilter();
+			// Temporarily disabled: delete sort_filter;
+			// Temporarily disabled: volatile auto *sparse_surface_filter = new pdal::SparseSurfaceFilter();
+			// Temporarily disabled: delete sparse_surface_filter;
+			// Temporarily disabled: volatile auto *splitter_filter = new pdal::SplitterFilter();
+			// Temporarily disabled: delete splitter_filter;
+			// Temporarily disabled: volatile auto *stats_filter = new pdal::StatsFilter();
+			// Temporarily disabled: delete stats_filter;
+			// Temporarily disabled: volatile auto *stream_callback_filter = new pdal::StreamCallbackFilter();
+			// Temporarily disabled: delete stream_callback_filter;
+			// Temporarily disabled: volatile auto *supervoxel_filter = new pdal::SupervoxelFilter();
+			// Temporarily disabled: delete supervoxel_filter;
 			volatile auto *tail_filter = new pdal::TailFilter();
 			delete tail_filter;
 
-			volatile auto *transformation_filter = new pdal::TransformationFilter();
-			delete transformation_filter;
-
-			volatile auto *voxel_center_nn_filter = new pdal::VoxelCenterNearestNeighborFilter();
-			delete voxel_center_nn_filter;
-
-			volatile auto *voxel_centroid_nn_filter = new pdal::VoxelCentroidNearestNeighborFilter();
-			delete voxel_centroid_nn_filter;
-
-			volatile auto *voxel_downsize_filter = new pdal::VoxelDownsizeFilter();
-			delete voxel_downsize_filter;
-
-			volatile auto *zsmooth_filter = new pdal::ZsmoothFilter();
-			delete zsmooth_filter;
-
+			// Temporarily disabled: volatile auto *transformation_filter = new pdal::TransformationFilter();
+			// Temporarily disabled: delete transformation_filter;
+			// Temporarily disabled: volatile auto *voxel_center_nn_filter = new pdal::VoxelCenterNearestNeighborFilter();
+			// Temporarily disabled: delete voxel_center_nn_filter;
+			// Temporarily disabled: volatile auto *voxel_centroid_nn_filter = new pdal::VoxelCentroidNearestNeighborFilter();
+			// Temporarily disabled: delete voxel_centroid_nn_filter;
+			// Temporarily disabled: volatile auto *voxel_downsize_filter = new pdal::VoxelDownsizeFilter();
+			// Temporarily disabled: delete voxel_downsize_filter;
+			// Temporarily disabled: volatile auto *zsmooth_filter = new pdal::ZsmoothFilter();
+			// Temporarily disabled: delete zsmooth_filter;
 			// ==========================================================================================================
 			// Readers & Writers
 			// ==========================================================================================================
 
-			volatile auto *bpf_reader = new pdal::BpfReader();
-			delete bpf_reader;
-
-			volatile auto *bpf_writer = new pdal::BpfWriter();
-			delete bpf_writer;
-
-			volatile auto *buffer_reader = new pdal::BufferReader();
-			delete buffer_reader;
-
-			volatile auto *copc_reader = new pdal::CopcReader();
-			delete copc_reader;
-
-			volatile auto *copc_writer = new pdal::CopcWriter();
-			delete copc_writer;
-
-			volatile auto *ept_addon_writer = new pdal::EptAddonWriter();
-			delete ept_addon_writer;
-
-			volatile auto *ept_reader = new pdal::EptReader();
-			delete ept_reader;
-
-			volatile auto *faux_reader = new pdal::FauxReader();
-			delete faux_reader;
-
-			volatile auto *fbi_reader = new pdal::FbiReader();
-			delete fbi_reader;
-
-			volatile auto *fbi_writer = new pdal::FbiWriter();
-			delete fbi_writer;
-
-			volatile auto *gdal_reader = new pdal::GDALReader();
-			delete gdal_reader;
-
-			volatile auto *gdal_writer = new pdal::GDALWriter();
-			delete gdal_writer;
-
-			volatile auto *gltf_writer = new pdal::GltfWriter();
-			delete gltf_writer;
-
-			volatile auto *las_reader = new pdal::LasReader();
-			delete las_reader;
-
-			volatile auto *las_writer = new pdal::LasWriter();
-			delete las_writer;
-
-			volatile auto *memory_view_reader = new pdal::MemoryViewReader();
-			delete memory_view_reader;
-
-			volatile auto *null_writer = new pdal::NullWriter();
-			delete null_writer;
-
-			volatile auto *obj_reader = new pdal::ObjReader();
-			delete obj_reader;
-
-			volatile auto *ogr_writer = new pdal::OGRWriter();
-			delete ogr_writer;
-
-			volatile auto *optech_reader = new pdal::OptechReader();
-			delete optech_reader;
-
-			volatile auto *pcd_reader = new pdal::PcdReader();
-			delete pcd_reader;
-
-			volatile auto *pcd_writer = new pdal::PcdWriter();
-			delete pcd_writer;
-
-			volatile auto *ply_reader = new pdal::PlyReader();
-			delete ply_reader;
-
-			volatile auto *ply_writer = new pdal::PlyWriter();
-			delete ply_writer;
-
-			volatile auto *pts_reader = new pdal::PtsReader();
-			delete pts_reader;
-
-			volatile auto *ptx_reader = new pdal::PtxReader();
-			delete ptx_reader;
-
-			volatile auto *qfit_reader = new pdal::QfitReader();
-			delete qfit_reader;
-
-			volatile auto *raster_writer = new pdal::RasterWriter();
-			delete raster_writer;
-
-			volatile auto *sbet_reader = new pdal::SbetReader();
-			delete sbet_reader;
-
-			volatile auto *sbet_writer = new pdal::SbetWriter();
-			delete sbet_writer;
-
-			volatile auto *stac_reader = new pdal::StacReader();
-			delete stac_reader;
-
-			volatile auto *terrasolid_reader = new pdal::TerrasolidReader();
-			delete terrasolid_reader;
-
-			volatile auto *text_reader = new pdal::TextReader();
-			delete text_reader;
-
-			volatile auto *text_writer = new pdal::TextWriter();
-			delete text_writer;
-
+			// Temporarily disabled: volatile auto *bpf_reader = new pdal::BpfReader();
+			// Temporarily disabled: delete bpf_reader;
+			// Temporarily disabled: volatile auto *bpf_writer = new pdal::BpfWriter();
+			// Temporarily disabled: delete bpf_writer;
+			// Temporarily disabled: volatile auto *buffer_reader = new pdal::BufferReader();
+			// Temporarily disabled: delete buffer_reader;
+			// Temporarily disabled: volatile auto *copc_reader = new pdal::CopcReader();
+			// Temporarily disabled: delete copc_reader;
+			// Temporarily disabled: volatile auto *copc_writer = new pdal::CopcWriter();
+			// Temporarily disabled: delete copc_writer;
+			// Temporarily disabled: volatile auto *ept_addon_writer = new pdal::EptAddonWriter();
+			// Temporarily disabled: delete ept_addon_writer;
+			// Temporarily disabled: volatile auto *ept_reader = new pdal::EptReader();
+			// Temporarily disabled: delete ept_reader;
+			// Temporarily disabled: volatile auto *faux_reader = new pdal::FauxReader();
+			// Temporarily disabled: delete faux_reader;
+			// Temporarily disabled: volatile auto *fbi_reader = new pdal::FbiReader();
+			// Temporarily disabled: delete fbi_reader;
+			// Temporarily disabled: volatile auto *fbi_writer = new pdal::FbiWriter();
+			// Temporarily disabled: delete fbi_writer;
+			// Temporarily disabled: volatile auto *gdal_reader = new pdal::GDALReader();
+			// Temporarily disabled: delete gdal_reader;
+			// Temporarily disabled: volatile auto *gdal_writer = new pdal::GDALWriter();
+			// Temporarily disabled: delete gdal_writer;
+			// Temporarily disabled: volatile auto *gltf_writer = new pdal::GltfWriter();
+			// Temporarily disabled: delete gltf_writer;
+			// Temporarily disabled: volatile auto *las_reader = new pdal::LasReader();
+			// Temporarily disabled: delete las_reader;
+			// Temporarily disabled: volatile auto *las_writer = new pdal::LasWriter();
+			// Temporarily disabled: delete las_writer;
+			// Temporarily disabled: volatile auto *memory_view_reader = new pdal::MemoryViewReader();
+			// Temporarily disabled: delete memory_view_reader;
+			// Temporarily disabled: volatile auto *null_writer = new pdal::NullWriter();
+			// Temporarily disabled: delete null_writer;
+			// Temporarily disabled: volatile auto *obj_reader = new pdal::ObjReader();
+			// Temporarily disabled: delete obj_reader;
+			// Temporarily disabled: volatile auto *ogr_writer = new pdal::OGRWriter();
+			// Temporarily disabled: delete ogr_writer;
+			// Temporarily disabled: volatile auto *optech_reader = new pdal::OptechReader();
+			// Temporarily disabled: delete optech_reader;
+			// Temporarily disabled: volatile auto *pcd_reader = new pdal::PcdReader();
+			// Temporarily disabled: delete pcd_reader;
+			// Temporarily disabled: volatile auto *pcd_writer = new pdal::PcdWriter();
+			// Temporarily disabled: delete pcd_writer;
+			// Temporarily disabled: volatile auto *ply_reader = new pdal::PlyReader();
+			// Temporarily disabled: delete ply_reader;
+			// Temporarily disabled: volatile auto *ply_writer = new pdal::PlyWriter();
+			// Temporarily disabled: delete ply_writer;
+			// Temporarily disabled: volatile auto *pts_reader = new pdal::PtsReader();
+			// Temporarily disabled: delete pts_reader;
+			// Temporarily disabled: volatile auto *ptx_reader = new pdal::PtxReader();
+			// Temporarily disabled: delete ptx_reader;
+			// Temporarily disabled: volatile auto *qfit_reader = new pdal::QfitReader();
+			// Temporarily disabled: delete qfit_reader;
+			// Temporarily disabled: volatile auto *raster_writer = new pdal::RasterWriter();
+			// Temporarily disabled: delete raster_writer;
+			// Temporarily disabled: volatile auto *sbet_reader = new pdal::SbetReader();
+			// Temporarily disabled: delete sbet_reader;
+			// Temporarily disabled: volatile auto *sbet_writer = new pdal::SbetWriter();
+			// Temporarily disabled: delete sbet_writer;
+			// Temporarily disabled: volatile auto *stac_reader = new pdal::StacReader();
+			// Temporarily disabled: delete stac_reader;
+			// Temporarily disabled: volatile auto *terrasolid_reader = new pdal::TerrasolidReader();
+			// Temporarily disabled: delete terrasolid_reader;
+			// Temporarily disabled: volatile auto *text_reader = new pdal::TextReader();
+			// Temporarily disabled: delete text_reader;
+			// Temporarily disabled: volatile auto *text_writer = new pdal::TextWriter();
+			// Temporarily disabled: delete text_writer;
 		} catch (Exception &error) {
 			std::cout << "PDAL Static Registry error: " << error.what() << std::endl;
 		}
