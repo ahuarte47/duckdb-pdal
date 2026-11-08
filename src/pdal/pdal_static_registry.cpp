@@ -23,7 +23,7 @@
 // Temporarily disabled: #include <pdal/filters/DividerFilter.hpp>
 // Temporarily disabled: #include <pdal/filters/ELMFilter.hpp>
 // Temporarily disabled: #include <pdal/filters/EstimateRankFilter.hpp>
-// Temporarily disabled: #include <pdal/filters/ExpressionFilter.hpp>
+#include <pdal/filters/ExpressionFilter.hpp>
 // Temporarily disabled: #include <pdal/filters/ExpressionStatsFilter.hpp>
 #include <pdal/filters/FaceRasterFilter.hpp>
 // Temporarily disabled: #include <pdal/filters/FarthestPointSamplingFilter.hpp>
@@ -172,8 +172,8 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 			// Temporarily disabled: delete elm_filter;
 			// Temporarily disabled: volatile auto *estimate_rank_filter = new pdal::EstimateRankFilter();
 			// Temporarily disabled: delete estimate_rank_filter;
-			// Temporarily disabled: volatile auto *expression_filter = new pdal::ExpressionFilter();
-			// Temporarily disabled: delete expression_filter;
+			volatile auto *expression_filter = new pdal::ExpressionFilter();
+			delete expression_filter;
 			// Temporarily disabled: volatile auto *expression_stats_filter = new pdal::ExpressionStatsFilter();
 			// Temporarily disabled: delete expression_stats_filter;
 			volatile auto *face_raster_filter = new pdal::FaceRasterFilter();
@@ -303,10 +303,10 @@ void PdalStaticRegistry::Register(ExtensionLoader &loader) {
 			// Readers & Writers
 			// ==========================================================================================================
 
-			// Temporarily disabled: volatile auto *bpf_reader = new pdal::BpfReader();
-			// Temporarily disabled: delete bpf_reader;
-			// Temporarily disabled: volatile auto *bpf_writer = new pdal::BpfWriter();
-			// Temporarily disabled: delete bpf_writer;
+			volatile auto *bpf_reader = new pdal::BpfReader();
+			delete bpf_reader;
+			volatile auto *bpf_writer = new pdal::BpfWriter();
+			delete bpf_writer;
 			// Temporarily disabled: volatile auto *buffer_reader = new pdal::BufferReader();
 			// Temporarily disabled: delete buffer_reader;
 			volatile auto *copc_reader = new pdal::CopcReader();
