@@ -1,6 +1,11 @@
 Release history
 ---------------
 
+0.7.1
+++++++++++++++++++
+
+- Build extension for Windows and DuckDB 2.0.0.
+
 0.7.0
 ++++++++++++++++++
 
