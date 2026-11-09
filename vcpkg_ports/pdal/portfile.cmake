@@ -17,6 +17,44 @@ vcpkg_from_github(
         rapidxml.diff
 )
 
+set(ARBITER_SOURCE "${SOURCE_PATH}/vendor/arbiter/arbiter.cpp")
+file(READ "${ARBITER_SOURCE}" ARBITER_CONTENT)
+set(ARBITER_OLD [=[
+    const std::string base64Vals(
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
+
+    const std::string hexVals("0123456789abcdef");]=])
+string(FIND "${ARBITER_CONTENT}" "${ARBITER_OLD}" ARBITER_OLD_POSITION)
+if(ARBITER_OLD_POSITION EQUAL -1)
+    message(FATAL_ERROR "Could not locate Arbiter's base64/hex tables in ${ARBITER_SOURCE}")
+endif()
+set(ARBITER_NEW [=[
+    constexpr char base64Vals[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    constexpr char hexVals[] = "0123456789abcdef";]=])
+string(REPLACE "${ARBITER_OLD}" "${ARBITER_NEW}" ARBITER_CONTENT "${ARBITER_CONTENT}")
+file(WRITE "${ARBITER_SOURCE}" "${ARBITER_CONTENT}")
+
+set(PDAL_UTILS_SOURCE "${SOURCE_PATH}/pdal/util/Utils.cpp")
+file(READ "${PDAL_UTILS_SOURCE}" PDAL_UTILS_CONTENT)
+set(PDAL_BASE64_ENCODE_OLD [=[
+    const std::string base64_chars =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz"
+        "0123456789+/";
+    std::string ret;]=])
+string(FIND "${PDAL_UTILS_CONTENT}" "${PDAL_BASE64_ENCODE_OLD}" PDAL_BASE64_ENCODE_POSITION)
+if(PDAL_BASE64_ENCODE_POSITION EQUAL -1)
+    message(FATAL_ERROR "Could not locate PDAL's base64 encoder table in ${PDAL_UTILS_SOURCE}")
+endif()
+set(PDAL_BASE64_ENCODE_NEW [=[
+    constexpr char base64_chars[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz"
+        "0123456789+/";
+    std::string ret;]=])
+string(REPLACE "${PDAL_BASE64_ENCODE_OLD}" "${PDAL_BASE64_ENCODE_NEW}" PDAL_UTILS_CONTENT "${PDAL_UTILS_CONTENT}")
+file(WRITE "${PDAL_UTILS_SOURCE}" "${PDAL_UTILS_CONTENT}")
+
 # Build PDAL and its bundled libraries as static libraries.
 file(READ "${SOURCE_PATH}/cmake/libraries.cmake" LIBS_CONTENT)
 string(REPLACE "set(PDAL_LIB_TYPE \"SHARED\")" "set(PDAL_LIB_TYPE \"STATIC\")" LIBS_CONTENT "${LIBS_CONTENT}")

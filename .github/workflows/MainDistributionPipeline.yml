@@ -21,6 +21,7 @@ jobs:
       extension_name: pdal
       exclude_archs: 'windows_amd64_mingw;wasm_mvp;wasm_eh;wasm_threads;linux_amd64;linux_arm64;osx_amd64;osx_arm64'
       extra_toolchains: 'parser_tools;'
+      test_config: '{"test_env_variables":{"TEST_RUNNER_SCRIPT":"scripts/windows_crash_diagnostic.py"}}'
 
   code-quality-check:
     name: Code Quality Check
